@@ -11,6 +11,7 @@ const sections = [
       { href: "/dashboard/logements", label: "Logements", icon: "🏠" },
       { href: "/dashboard/messages", label: "Messages", icon: "💬" },
       { href: "/dashboard/reservations", label: "Réservations", icon: "📅" },
+      { href: "/dashboard/avis", label: "Avis", icon: "⭐" },
     ],
   },
   {

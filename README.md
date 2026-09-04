@@ -100,6 +100,7 @@ Site"), ajoute 3 nodes **Webhook** :
 | `generate-conv-code` | `{ id_logement, cle_unique }` | Vérifier le secret, générer un code aléatoire unique (vérifier l'absence de collision sur toute la table), l'écrire dans `Code_conv` sur la ligne correspondante, retourner `{ code_conv }` |
 | `get-messages` | `{ id_logements: [...] }` | Vérifier le secret, retourner l'historique de conversations Airtable.Messages pour ces logements : `{ messages: [{ id, id_logement, nom_voyageur, dernier_message, statut, horodatage }] }` |
 | `get-message-stats` | `{ id_logement }` | Vérifier le secret, retourner `{ count }` (nombre de messages répondus par LÉO pour ce logement) |
+| `get-avis` | `{ id_logements: [...] }` | Vérifier le secret, retourner les avis Airtable.Avis dont `id_logement` est dans la liste : `{ avis: [{ id, id_logement, telephone, note, commentaire, date }] }` |
 
 **Sécuriser chaque webhook** : ajoute un node **IF** juste après le
 Webhook trigger qui compare `{{ $json.headers['x-webhook-secret'] }}` à
