@@ -15,6 +15,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
   }
 
+  const body = await request.json().catch(() => ({}));
+  const quantity = Math.max(1, Math.trunc(Number(body?.quantity) || 1));
+  const interval = body?.interval === "year" ? "year" : "month";
+  const priceId =
+    interval === "year"
+      ? process.env.STRIPE_PRICE_ID_LOGEMENTS_ANNUAL
+      : process.env.STRIPE_PRICE_ID_LOGEMENTS;
+
   try {
     const { data: host } = await supabase
       .from("hosts")
@@ -42,8 +50,8 @@ export async function POST(request: Request) {
       managed_payments: { enabled: false },
       line_items: [
         {
-          price: process.env.STRIPE_PRICE_ID_LOGEMENTS,
-          quantity: 1,
+          price: priceId,
+          quantity,
         },
       ],
       subscription_data: {

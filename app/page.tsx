@@ -1,12 +1,7 @@
 import Link from "next/link";
 import PhoneMock from "./components/PhoneMock";
 import DemoForm from "./components/DemoForm";
-
-const pricing = [
-  { range: "1 à 5 logements", price: "21 €" },
-  { range: "6 à 10 logements", price: "16 €" },
-  { range: "10 logements et plus", price: "13 €" },
-];
+import PricingSection from "./components/PricingSection";
 
 const problems = [
   {
@@ -181,23 +176,7 @@ export default function Home() {
           <p className="mt-3 max-w-md text-sm text-mist-400">
             Sans engagement. Aucun frais de mise en service.
           </p>
-          <div className="mt-10 grid gap-6 sm:grid-cols-3">
-            {pricing.map((t) => (
-              <div
-                key={t.range}
-                className="rounded-2xl border border-night-600 bg-night-900 p-6"
-              >
-                <p className="text-sm text-mist-400">{t.range}</p>
-                <p className="mt-3 font-display text-4xl text-white">
-                  {t.price}
-                  <span className="text-base font-body text-mist-500">
-                    {" "}
-                    /logement/mois
-                  </span>
-                </p>
-              </div>
-            ))}
-          </div>
+          <PricingSection />
         </div>
       </section>
 
