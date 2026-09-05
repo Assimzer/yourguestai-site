@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -11,7 +11,17 @@ type Property = {
   ical_url: string | null;
 };
 
-export default function PropertyCard({ property }: { property: Property }) {
+export default function PropertyCard({
+  property,
+  messageCount = null,
+}: {
+  property: Property;
+  // Passe par le parent (un seul fetch groupe via /api/messages) plutot que
+  // par un fetch individuel ici : evite de multiplier les appels a
+  // /api/message-stats (un par carte -> limite de debit Airtable atteinte
+  // des 5-6 logements charges en meme temps).
+  messageCount?: number | null;
+}) {
   const router = useRouter();
   const [actif, setActif] = useState(property.actif);
   const [icalUrl, setIcalUrl] = useState(property.ical_url ?? "");
@@ -21,30 +31,11 @@ export default function PropertyCard({ property }: { property: Property }) {
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [toggleError, setToggleError] = useState<string | null>(null);
-
-  // Nouvel état pour stocker le nombre de messages
-  const [messageCount, setMessageCount] = useState<number | null>(null);
-
-  // Le webhook n8n et son secret ne doivent jamais être appelés depuis le
-  // navigateur (n'importe qui peut les lire dans l'onglet réseau). On passe
-  // par notre propre route serveur, qui vérifie la session puis relaie
-  // l'appel à n8n avec le secret côté serveur uniquement.
-  useEffect(() => {
-    async function fetchMessageStats() {
-      try {
-        const res = await fetch(
-          `/api/message-stats?property_id=${property.id}`
-        );
-        if (res.ok) {
-          const data = await res.json();
-          setMessageCount(data.count);
-        }
-      } catch (error) {
-        console.error("Erreur de récupération des statistiques :", error);
-      }
-    }
-    fetchMessageStats();
-  }, [property.id]);
+  const [renaming, setRenaming] = useState(false);
+  const [nomDraft, setNomDraft] = useState(property.nom);
+  const [nom, setNom] = useState(property.nom);
+  const [savingNom, setSavingNom] = useState(false);
+  const [renameError, setRenameError] = useState<string | null>(null);
 
   async function handleToggle() {
     const next = !actif;
@@ -84,6 +75,34 @@ export default function PropertyCard({ property }: { property: Property }) {
     if (res.ok) setIcalSaved(true);
   }
 
+  async function handleRename() {
+    const trimmed = nomDraft.trim();
+    if (trimmed.length < 2 || trimmed === nom) {
+      setRenaming(false);
+      setNomDraft(nom);
+      return;
+    }
+
+    setSavingNom(true);
+    setRenameError(null);
+
+    const res = await fetch("/api/rename-property", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ property_id: property.id, nom: trimmed }),
+    });
+
+    setSavingNom(false);
+
+    if (res.ok) {
+      setNom(trimmed);
+      setRenaming(false);
+    } else {
+      const data = await res.json().catch(() => ({}));
+      setRenameError(data.error ?? "Une erreur est survenue.");
+    }
+  }
+
   async function handleDelete() {
     setDeleting(true);
 
@@ -104,8 +123,60 @@ export default function PropertyCard({ property }: { property: Property }) {
   return (
     <div className="rounded-2xl border border-night-600 bg-night-900 p-6">
       <div className="flex items-center justify-between">
-        <div>
-          <p className="font-display text-lg text-white">{property.nom}</p>
+        <div className="min-w-0 flex-1">
+          {renaming ? (
+            <div className="flex items-center gap-2">
+              <input
+                autoFocus
+                value={nomDraft}
+                onChange={(e) => setNomDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleRename();
+                  if (e.key === "Escape") {
+                    setRenaming(false);
+                    setNomDraft(nom);
+                  }
+                }}
+                className="rounded-lg border border-night-600 bg-night-800 px-2 py-1 font-display text-lg text-white focus:border-porch-500"
+              />
+              <button
+                onClick={handleRename}
+                disabled={savingNom}
+                className="rounded-md bg-porch-500 px-2.5 py-1 text-xs font-semibold text-night-950 transition hover:bg-porch-400 disabled:opacity-60"
+              >
+                {savingNom ? "..." : "OK"}
+              </button>
+              <button
+                onClick={() => {
+                  setRenaming(false);
+                  setNomDraft(nom);
+                }}
+                disabled={savingNom}
+                className="text-xs text-mist-400 hover:text-white"
+              >
+                Annuler
+              </button>
+            </div>
+          ) : (
+            <p className="flex items-center gap-2 font-display text-lg text-white">
+              {nom}
+              <button
+                onClick={() => {
+                  setNomDraft(nom);
+                  setRenameError(null);
+                  setRenaming(true);
+                }}
+                title="Renommer ce logement"
+                className="text-mist-500 transition hover:text-porch-400"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4Z" />
+                </svg>
+              </button>
+            </p>
+          )}
+          {renameError && <p className="mt-1 text-xs text-warn">{renameError}</p>}
           {/* Affichage du compteur de messages */}
           {messageCount !== null && (
             <p className="text-xs text-mist-400 mt-1">
@@ -200,7 +271,7 @@ export default function PropertyCard({ property }: { property: Property }) {
       {confirmingDelete && (
         <div className="mt-4 rounded-lg border border-warn/30 bg-warn/10 p-3">
           <p className="text-xs text-white">
-            Supprimer &laquo; {property.nom} &raquo; ? Cette action est
+            Supprimer &laquo; {nom} &raquo; ? Cette action est
             définitive.
           </p>
           <div className="mt-2 flex gap-2">

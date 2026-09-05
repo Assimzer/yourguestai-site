@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import PropertyCard from "../PropertyCard";
+import LogementsGrid from "./LogementsGrid";
 import AddPropertyForm from "../AddPropertyForm";
 
 export default async function LogementsPage() {
@@ -48,11 +48,7 @@ export default async function LogementsPage() {
       )}
 
       {properties && properties.length > 0 && (
-        <div className="mt-8 grid gap-5 sm:grid-cols-2">
-          {properties.map((p) => (
-            <PropertyCard key={p.id} property={p} />
-          ))}
-        </div>
+        <LogementsGrid properties={properties} />
       )}
     </div>
   );

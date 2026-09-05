@@ -264,8 +264,70 @@ export async function GET() {
     (a, b) => b.message_count - a.message_count
   );
 
+  // Serie temporelle (14 derniers jours) pour le graphique d'activite du
+  // tableau de bord : un point par jour, meme les jours a 0 message, pour
+  // que le graphique garde un axe regulier.
+  const DAYS = 14;
+  const dailyMap = new Map<string, { message_count: number; escalade_count: number }>();
+  const today = new Date();
+  for (let i = DAYS - 1; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    dailyMap.set(d.toISOString().slice(0, 10), { message_count: 0, escalade_count: 0 });
+  }
+  for (const m of rawMessages) {
+    const day = (m.date || "").slice(0, 10);
+    const bucket = dailyMap.get(day);
+    if (!bucket) continue;
+    bucket.message_count += 1;
+    if (m.escalade) bucket.escalade_count += 1;
+  }
+  const daily = Array.from(dailyMap.entries()).map(([date, v]) => ({
+    date,
+    message_count: v.message_count,
+    escalade_count: v.escalade_count,
+  }));
+
+  // Periode precedente (J-28 a J-15), pour afficher une tendance (delta) a
+  // cote du total de la periode en cours plutot qu'un chiffre isole.
+  const previousStart = new Date(today);
+  previousStart.setDate(previousStart.getDate() - (2 * DAYS - 1));
+  const previousEnd = new Date(today);
+  previousEnd.setDate(previousEnd.getDate() - DAYS);
+  const previousStartStr = previousStart.toISOString().slice(0, 10);
+  const previousEndStr = previousEnd.toISOString().slice(0, 10);
+  let previous_period_message_count = 0;
+  for (const m of rawMessages) {
+    const day = (m.date || "").slice(0, 10);
+    if (day && day >= previousStartStr && day <= previousEndStr) {
+      previous_period_message_count += 1;
+    }
+  }
+
+  // Dernieres escalades (toutes conversations confondues) : vue "a traiter"
+  // en un coup d'oeil sur le tableau de bord. Le resume du probleme n'est
+  // pas stocke dans Airtable (seul un indicateur booleen "escalade" existe
+  // aujourd'hui) donc on ne peut afficher que logement + telephone + date ;
+  // le lien renvoie vers la conversation complete pour le detail.
+  const recent_escalades = rawMessages
+    .filter((m: { escalade: boolean }) => m.escalade)
+    .sort((a: { date: string }, b: { date: string }) => b.date.localeCompare(a.date))
+    .slice(0, 5)
+    .map((m: { logement: string; telephone: string; date: string }) => ({
+      logement: m.logement,
+      telephone: m.telephone,
+      date: m.date,
+    }));
+
   return NextResponse.json(
-    { ok: true, messages, by_logement },
+    {
+      ok: true,
+      messages,
+      by_logement,
+      daily,
+      previous_period_message_count,
+      recent_escalades,
+    },
     { headers: { "Cache-Control": "no-store" } }
   );
 }
