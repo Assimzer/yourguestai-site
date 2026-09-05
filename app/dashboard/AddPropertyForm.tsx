@@ -58,7 +58,7 @@ export default function AddPropertyForm() {
           autoFocus
           value={nom}
           onChange={(e) => setNom(e.target.value)}
-          placeholder="Ex: Airbnb Arbois, Studio centre-ville..."
+          placeholder="Ex: Studio centre-ville, Appartement Le Marais..."
           className="mt-1 w-full rounded-lg border border-night-600 bg-night-800 px-3 py-2 text-sm text-white placeholder:text-mist-500 focus:border-porch-500"
         />
         {status === "error" && (

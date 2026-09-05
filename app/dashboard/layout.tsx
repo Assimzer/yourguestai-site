@@ -41,6 +41,14 @@ export default async function DashboardLayout({
         </header>
         <main className="px-6 py-10 sm:px-10">{children}</main>
       </div>
+
+      {/* Logo affiché uniquement une fois connecté (espace hôte) — n'affecte
+          pas la palette ambre/orange utilisée partout ailleurs sur le site. */}
+      <img
+        src="/logo-badge.png"
+        alt="YourGuestAI"
+        className="pointer-events-none fixed bottom-4 right-4 h-12 w-12 rounded-full opacity-80 sm:h-14 sm:w-14"
+      />
     </div>
   );
 }

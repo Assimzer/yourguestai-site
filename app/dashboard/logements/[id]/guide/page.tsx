@@ -39,7 +39,11 @@ export default async function GuidePage({
       </header>
 
       <div className="mx-auto max-w-3xl px-6 py-10">
-        <GuideEditor propertyId={property.id} propertyNom={property.nom} />
+        <GuideEditor
+          propertyId={property.id}
+          propertyNom={property.nom}
+          userId={user.id}
+        />
       </div>
     </main>
   );

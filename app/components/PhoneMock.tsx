@@ -28,7 +28,7 @@ export default function PhoneMock() {
             </div>
 
             <p className="self-start text-[10px] text-mist-500 mt-0.5 ml-1">
-              Répondu en 2 s
+              Répondu en moins de 30 s
             </p>
           </div>
         </div>

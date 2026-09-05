@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 
 type GuideFields = {
   adresse: string;
@@ -32,18 +33,32 @@ const EMPTY: GuideFields = {
   contact_urgence: "",
 };
 
+type AddressSuggestion = {
+  label: string;
+};
+
 export default function GuideEditor({
   propertyId,
   propertyNom,
+  userId,
 }: {
   propertyId: string;
   propertyNom: string;
+  userId: string;
 }) {
   const [fields, setFields] = useState<GuideFields>(EMPTY);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
+
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [photoError, setPhotoError] = useState("");
+  const [showPhotoUrlInput, setShowPhotoUrlInput] = useState(false);
+
+  const [addressSuggestions, setAddressSuggestions] = useState<AddressSuggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const addressDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -77,6 +92,92 @@ export default function GuideEditor({
       setFields((prev) => ({ ...prev, [key]: e.target.value }));
       setSaved(false);
     };
+  }
+
+  function handleAddressChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const value = e.target.value;
+    setFields((prev) => ({ ...prev, adresse: value }));
+    setSaved(false);
+
+    if (addressDebounce.current) clearTimeout(addressDebounce.current);
+
+    if (value.trim().length < 3) {
+      setAddressSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    // API Adresse du gouvernement (data.gouv.fr) : gratuite, publique, sans
+    // clé — adaptee puisque le service cible la France. Debounce simple pour
+    // eviter une requete a chaque frappe.
+    addressDebounce.current = setTimeout(async () => {
+      try {
+        const res = await fetch(
+          `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(value)}&limit=5`
+        );
+        if (!res.ok) return;
+        const data = await res.json();
+        const suggestions: AddressSuggestion[] = (data.features ?? []).map(
+          (f: { properties: { label: string } }) => ({ label: f.properties.label })
+        );
+        setAddressSuggestions(suggestions);
+        setShowSuggestions(suggestions.length > 0);
+      } catch {
+        // Pas bloquant : l'hôte peut toujours taper l'adresse à la main.
+      }
+    }, 300);
+  }
+
+  function selectAddress(label: string) {
+    setFields((prev) => ({ ...prev, adresse: label }));
+    setShowSuggestions(false);
+    setAddressSuggestions([]);
+  }
+
+  async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // permet de re-sélectionner le même fichier ensuite
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setPhotoError("Merci de choisir un fichier image (jpeg, png...).");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setPhotoError("Image trop lourde (5 Mo max).");
+      return;
+    }
+
+    setUploadingPhoto(true);
+    setPhotoError("");
+
+    try {
+      const supabase = createClient();
+      const extension = file.name.split(".").pop() || "jpg";
+      // Chemin préfixé par l'id de l'hôte : les règles d'accès du bucket
+      // n'autorisent chaque hôte à écrire que dans son propre dossier.
+      const path = `${userId}/${propertyId}/cover.${extension}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("logement-photos")
+        .upload(path, file, { upsert: true, cacheControl: "3600" });
+
+      if (uploadError) {
+        setPhotoError("Échec de l'envoi. Réessaie.");
+        return;
+      }
+
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("logement-photos").getPublicUrl(path);
+
+      // Évite que le navigateur affiche une version mise en cache de
+      // l'ancienne photo après un remplacement (même chemin de fichier).
+      setFields((prev) => ({ ...prev, photo_url: `${publicUrl}?t=${Date.now()}` }));
+      setSaved(false);
+    } finally {
+      setUploadingPhoto(false);
+    }
   }
 
   async function handleSave(e: React.FormEvent) {
@@ -136,22 +237,93 @@ export default function GuideEditor({
 
       {/* Section : Localisation */}
       <Section title="📍 Localisation & photo">
-        <Field label="Adresse du logement">
-          <input
-            type="text"
-            value={fields.adresse}
-            onChange={set("adresse")}
-            placeholder="2 rue du Pré, 39600 Arbois"
-          />
-        </Field>
-        <Field label="URL de la photo de couverture" hint="Lien direct vers une image (Airbnb, Imgur, etc.)">
-          <input
-            type="url"
-            value={fields.photo_url}
-            onChange={set("photo_url")}
-            placeholder="https://…/photo.jpg"
-          />
-        </Field>
+        <div className="relative">
+          <Field label="Adresse du logement">
+            <input
+              type="text"
+              value={fields.adresse}
+              onChange={handleAddressChange}
+              onFocus={() => setShowSuggestions(addressSuggestions.length > 0)}
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+              placeholder="12 rue de la Paix, 75002 Paris"
+              autoComplete="off"
+            />
+          </Field>
+          {showSuggestions && (
+            <ul className="absolute z-10 mt-1 w-full overflow-hidden rounded-lg border border-night-600 bg-night-800 shadow-lg">
+              {addressSuggestions.map((s) => (
+                <li key={s.label}>
+                  <button
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => selectAddress(s.label)}
+                    className="block w-full px-3 py-2 text-left text-sm text-mist-300 hover:bg-night-700 hover:text-white"
+                  >
+                    {s.label}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        <div>
+          <label className="mb-1.5 block text-xs font-medium text-mist-400">
+            Photo de couverture
+          </label>
+          <p className="mb-2 text-xs text-mist-500">
+            Dépose une image depuis ton ordinateur.
+          </p>
+
+          <div className="flex items-center gap-3">
+            {fields.photo_url && (
+              <img
+                src={fields.photo_url}
+                alt="Aperçu"
+                className="h-14 w-20 rounded-lg object-cover"
+              />
+            )}
+            <label className="cursor-pointer rounded-lg border border-night-600 bg-night-800 px-3 py-2 text-xs font-medium text-mist-300 transition hover:border-porch-500/40 hover:text-white">
+              {uploadingPhoto
+                ? "Envoi..."
+                : fields.photo_url
+                ? "Changer la photo"
+                : "Choisir un fichier"}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handlePhotoUpload}
+                disabled={uploadingPhoto}
+                className="hidden"
+              />
+            </label>
+          </div>
+          {photoError && <p className="mt-2 text-xs text-warn">{photoError}</p>}
+
+          {showPhotoUrlInput ? (
+            <div className="mt-3">
+              <Field
+                label="Lien externe (Airbnb, Imgur...)"
+                hint="À utiliser plutôt qu'un dépôt de fichier — cette adresse reste visible telle quelle."
+              >
+                <input
+                  type="url"
+                  value={fields.photo_url}
+                  onChange={set("photo_url")}
+                  placeholder="https://…/photo.jpg"
+                />
+              </Field>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowPhotoUrlInput(true)}
+              className="mt-2 text-xs text-mist-500 underline decoration-night-600 underline-offset-4 hover:text-mist-300"
+            >
+              Utiliser un lien externe à la place
+            </button>
+          )}
+        </div>
       </Section>
 
       {/* Section : Arrivée / Départ */}

@@ -77,6 +77,11 @@ export default function PricingSection() {
           </span>
         </button>
       </div>
+      {annual && (
+        <p className="mt-3 text-xs text-mist-500">
+          Prix garanti, bloqué pendant 12 mois.
+        </p>
+      )}
 
       <div className="mt-10 grid gap-6 sm:grid-cols-3">
         {pricing.map((t) => (

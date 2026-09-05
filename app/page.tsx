@@ -32,7 +32,7 @@ export default function Home() {
               Votre concierge qui ne s&apos;endort jamais.
             </h1>
             <p className="mt-6 max-w-lg text-lg leading-relaxed text-mist-400">
-              LÉO répond à vos voyageurs sur WhatsApp en moins de 3 secondes,
+              LÉO répond à vos voyageurs sur WhatsApp en moins de 30 secondes,
               24h/24 — sur chacun de vos logements, avec les bonnes
               informations, jamais les mauvaises.
             </p>
@@ -100,8 +100,38 @@ export default function Home() {
         </div>
       </section>
 
-      {/* LIVRET D'ACCUEIL */}
+      {/* CE QUE LÉO FAIT VRAIMENT */}
       <section className="border-b border-night-800 bg-night-900/40">
+        <div className="mx-auto max-w-6xl px-6 py-20">
+          <p className="mb-3 font-mono text-xs uppercase tracking-[0.2em] text-porch-500">
+            Fonctionnalités
+          </p>
+          <h2 className="max-w-xl font-display text-3xl italic text-white">
+            Ce que LÉO fait vraiment, aujourd&apos;hui.
+          </h2>
+
+          <div className="mt-12 grid gap-6 md:grid-cols-3">
+            <FeatureCard
+              icon="⚡"
+              title="Réponse en moins de 30 secondes"
+              text="24h/24, sur WhatsApp — le voyageur a sa réponse avant même de reposer son téléphone."
+            />
+            <FeatureCard
+              icon="🗺️"
+              title="Des activités à réserver, sans quitter la conversation"
+              text="LÉO recommande des activités locales et propose la réservation en ligne directement dans l'échange (intégration GetYourGuide)."
+            />
+            <FeatureCard
+              icon="🚨"
+              title="Les vraies urgences remontent, le reste non"
+              text="Panne, dégât, problème sérieux : vous êtes alerté immédiatement. Pour le Wi-Fi ou le code du portail, LÉO gère seul — vous n'êtes pas dérangé."
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* TABLEAU DE BORD */}
+      <section className="border-b border-night-800">
         <div className="mx-auto max-w-6xl px-6 py-20">
           <div className="grid gap-12 lg:grid-cols-[1fr,1fr] lg:items-center">
             <div>
@@ -109,57 +139,69 @@ export default function Home() {
                 Inclus avec LÉO
               </p>
               <h2 className="font-display text-3xl italic text-white">
-                Un livret d&apos;accueil que vos voyageurs consultent avant
-                même d&apos;écrire.
+                Un tableau de bord qui vous dit ce qui se passe vraiment.
               </h2>
               <p className="mt-4 text-sm leading-relaxed text-mist-400">
-                Wifi, codes d&apos;accès, règles, bons plans du quartier —
-                généré automatiquement depuis la fiche de votre logement,
-                accessible par un simple lien, sans application à installer.
+                Messages traités par logement, escalades vers vous,
+                conversations en cours ou terminées — tout est visible en un
+                coup d&apos;œil, sans avoir à rouvrir WhatsApp.
               </p>
 
               <div className="mt-8 grid gap-5 sm:grid-cols-2">
                 <Feature
-                  icon="⚡"
-                  title="Généré automatiquement"
-                  text="Vos infos Airtable alimentent le livret sans ressaisie."
+                  icon="📊"
+                  title="Statistiques par logement"
+                  text="Combien de messages, combien d'escalades, sur quelle période."
                 />
                 <Feature
-                  icon="📱"
-                  title="Un lien, aucune app"
-                  text="Envoyé sur WhatsApp, ouvert en un tap sur tous les téléphones."
+                  icon="🔔"
+                  title="Escalades tracées"
+                  text="Chaque alerte envoyée au propriétaire reste visible et datée."
                 />
                 <Feature
-                  icon="💬"
-                  title="Moins de messages à LÉO"
-                  text="Le voyageur trouve seul l'essentiel avant d'écrire."
+                  icon="🗂️"
+                  title="Statut de chaque conversation"
+                  text="En cours, à venir, terminée — au fil des réservations."
                 />
                 <Feature
-                  icon="🔄"
-                  title="Toujours à jour"
-                  text="Une modification dans Airtable, et le livret suit."
+                  icon="🔍"
+                  title="Filtres par date et par logement"
+                  text="Retrouvez un échange précis en quelques secondes."
                 />
               </div>
             </div>
 
             <div className="rounded-2xl border border-night-600 bg-night-900 p-1">
-              <div className="rounded-xl bg-night-800 px-5 py-4">
-                <p className="font-display text-sm italic text-porch-400">
-                  Livret — Airbnb Arbois
-                </p>
-                <div className="mt-4 flex flex-col gap-2 text-xs text-mist-400">
-                  <p className="rounded-lg bg-night-700 px-3 py-2">
-                    🔑 Code du portail : <span className="font-mono text-white">4752</span>
-                  </p>
-                  <p className="rounded-lg bg-night-700 px-3 py-2">
-                    📶 Wifi : <span className="font-mono text-white">Livebox_BF88</span>
-                  </p>
-                  <p className="rounded-lg bg-night-700 px-3 py-2">
-                    🕒 Check-in dès 15h · Check-out avant 11h
-                  </p>
-                  <p className="rounded-lg bg-night-700 px-3 py-2">
-                    🍽️ Nos adresses préférées à Arbois
-                  </p>
+              <div className="rounded-xl bg-night-800 px-5 py-5">
+                <div className="flex items-baseline justify-between">
+                  <p className="text-xs text-mist-400">Activité LÉO — 14 derniers jours</p>
+                  <span className="text-xs text-ok">+18% vs période précédente</span>
+                </div>
+                <p className="mt-1 font-display text-3xl text-white">142</p>
+
+                <div className="mt-5 flex items-end gap-1.5" aria-hidden>
+                  {[40, 55, 35, 70, 50, 85, 60, 45, 90, 65, 75, 55].map((h, i) => (
+                    <div
+                      key={i}
+                      className="flex-1 rounded-t bg-porch-500/70"
+                      style={{ height: `${h}px` }}
+                    />
+                  ))}
+                </div>
+
+                <div className="mt-6 flex flex-col gap-2 border-t border-night-700 pt-4">
+                  <div className="flex items-center justify-between rounded-lg bg-night-700 px-3 py-2 text-xs">
+                    <span className="text-white">Appartement Le Marais</span>
+                    <span className="rounded-full bg-ok/20 px-2 py-0.5 text-[11px] font-medium text-ok">
+                      En cours
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between rounded-lg bg-night-700 px-3 py-2 text-xs">
+                    <span className="text-white">Studio Vieux-Port</span>
+                    <span className="rounded-full bg-warn/20 px-2 py-0.5 text-[11px] font-medium text-warn">
+                      Escaladé
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -167,14 +209,15 @@ export default function Home() {
         </div>
       </section>
 
-
+      {/* TARIFS */}
       <section className="border-b border-night-800 bg-night-900/40">
         <div className="mx-auto max-w-6xl px-6 py-20">
           <h2 className="font-display text-3xl italic text-white">
             Un tarif qui baisse avec votre portefeuille.
           </h2>
           <p className="mt-3 max-w-md text-sm text-mist-400">
-            Sans engagement. Aucun frais de mise en service.
+            Sans engagement. Aucun frais de mise en service. Essai gratuit 14
+            jours.
           </p>
           <PricingSection />
         </div>
@@ -211,6 +254,24 @@ export default function Home() {
         </div>
       </footer>
     </main>
+  );
+}
+
+function FeatureCard({
+  icon,
+  title,
+  text,
+}: {
+  icon: string;
+  title: string;
+  text: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-night-600 bg-night-900 p-6 transition hover:border-porch-500/40">
+      <p className="text-2xl">{icon}</p>
+      <p className="mt-4 font-display text-lg text-white">{title}</p>
+      <p className="mt-2 text-sm leading-relaxed text-mist-400">{text}</p>
+    </div>
   );
 }
 
