@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 type Conversation = {
   telephone: string;
@@ -79,26 +79,22 @@ function withinDateRange(iso: string, from: string, to: string) {
   return true;
 }
 
-export default function MessagesList() {
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export default function MessagesList({
+  initialConversations,
+  initialError,
+}: {
+  // Rendu initial fourni par le Server Component parent (un seul aller-retour
+  // au chargement de la page, plutot qu'un fetch client + spinner).
+  initialConversations: Conversation[];
+  initialError: string | null;
+}) {
+  const [conversations] = useState<Conversation[]>(initialConversations);
+  const [error] = useState<string | null>(initialError);
 
   const [logementFilter, setLogementFilter] = useState("tous");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [escaladeOnly, setEscaladeOnly] = useState(false);
-
-  useEffect(() => {
-    fetch("/api/messages", { cache: "no-store" })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.error) throw new Error(data.error);
-        setConversations(data.messages);
-      })
-      .catch((e) => setError(e instanceof Error ? e.message : "Erreur inconnue"))
-      .finally(() => setLoading(false));
-  }, []);
 
   const logements = useMemo(
     () => Array.from(new Set(conversations.map((c) => c.logement))).sort(),
@@ -137,10 +133,6 @@ export default function MessagesList() {
 
   const hasActiveFilters =
     logementFilter !== "tous" || Boolean(dateFrom) || Boolean(dateTo) || escaladeOnly;
-
-  if (loading) {
-    return <p className="text-sm text-mist-400">Chargement des conversations…</p>;
-  }
 
   if (error) {
     return (

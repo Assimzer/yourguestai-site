@@ -1,6 +1,17 @@
+import { createClient } from "@/lib/supabase/server";
+import { getMessagesData } from "@/lib/messages/getMessagesData";
 import MessagesList from "./MessagesList";
 
-export default function MessagesPage() {
+export default async function MessagesPage() {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const result = user
+    ? await getMessagesData(supabase, user.id)
+    : { ok: false as const, error: "Non authentifié", status: 401 };
+
   return (
     <div>
       <h1 className="font-display text-2xl text-white">Messages</h1>
@@ -9,7 +20,10 @@ export default function MessagesPage() {
       </p>
 
       <div className="mt-8">
-        <MessagesList />
+        <MessagesList
+          initialConversations={result.ok ? result.messages : []}
+          initialError={result.ok ? null : result.error}
+        />
       </div>
     </div>
   );

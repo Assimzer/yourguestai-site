@@ -29,15 +29,28 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user && request.nextUrl.pathname.startsWith("/dashboard")) {
+  const { pathname } = request.nextUrl;
+
+  if (!user && pathname.startsWith("/dashboard")) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/login";
     return NextResponse.redirect(redirectUrl);
+  }
+
+  // Filet de securite pour /api/* : chaque route verifie deja sa propre
+  // session via requireUser(), mais ce garde-fou au niveau middleware evite
+  // qu'une future route oublie ce check. Exclut les deux routes publiques
+  // par design (webhook Stripe verifie par signature, formulaire de demo).
+  const isPublicApiRoute =
+    pathname === "/api/stripe/webhook" || pathname === "/api/demo-request";
+
+  if (!user && pathname.startsWith("/api/") && !isPublicApiRoute) {
+    return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
   }
 
   return response;
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*"],
+  matcher: ["/dashboard/:path*", "/api/:path*"],
 };

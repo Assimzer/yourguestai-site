@@ -11,7 +11,9 @@ export default async function ComptePage() {
 
   const { data: host } = await supabase
     .from("hosts")
-    .select("email, statut_abonnement, created_at, logements_quantity, stripe_customer_id")
+    .select(
+      "email, statut_abonnement, created_at, logements_quantity, stripe_customer_id, nom_complet, telephone, nom_conciergerie"
+    )
     .eq("id", user!.id)
     .single();
 
@@ -25,7 +27,12 @@ export default async function ComptePage() {
       </p>
 
       <div className="mt-8 max-w-md rounded-2xl border border-night-600 bg-night-900 p-6">
+        <Row label="Nom" value={host?.nom_complet || "—"} />
         <Row label="Email" value={host?.email ?? user?.email ?? "—"} />
+        <Row label="Téléphone" value={host?.telephone || "—"} />
+        {host?.nom_conciergerie && (
+          <Row label="Conciergerie" value={host.nom_conciergerie} />
+        )}
       <Row
         label="Statut"
         value={

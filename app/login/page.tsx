@@ -10,10 +10,7 @@ export default function LoginPage() {
   const supabase = createClient();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [mode, setMode] = useState<"password" | "magic">("password");
-  const [status, setStatus] = useState<"idle" | "loading" | "sent" | "error">(
-    "idle"
-  );
+  const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
 
   async function handlePasswordLogin(e: React.FormEvent) {
@@ -32,23 +29,6 @@ export default function LoginPage() {
     router.refresh();
   }
 
-  async function handleMagicLink(e: React.FormEvent) {
-    e.preventDefault();
-    setStatus("loading");
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/dashboard`,
-      },
-    });
-    if (error) {
-      setErrorMsg("Impossible d'envoyer le lien. Vérifiez l'adresse email.");
-      setStatus("error");
-      return;
-    }
-    setStatus("sent");
-  }
-
   return (
     <main className="flex min-h-screen items-center justify-center bg-night-950 px-6">
       <div className="w-full max-w-sm">
@@ -62,70 +42,34 @@ export default function LoginPage() {
             Connectez-vous pour gérer vos logements.
           </p>
 
-          <div className="mt-6 flex gap-2 rounded-lg bg-night-800 p-1 text-xs">
+          <form onSubmit={handlePasswordLogin} className="mt-6 flex flex-col gap-3">
+            <input
+              type="email"
+              required
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="rounded-lg border border-night-600 bg-night-800 px-4 py-2.5 text-sm text-white placeholder:text-mist-500 focus:border-porch-500"
+            />
+            <input
+              type="password"
+              required
+              placeholder="Mot de passe"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="rounded-lg border border-night-600 bg-night-800 px-4 py-2.5 text-sm text-white placeholder:text-mist-500 focus:border-porch-500"
+            />
+            {status === "error" && (
+              <p className="text-sm text-warn">{errorMsg}</p>
+            )}
             <button
-              onClick={() => setMode("password")}
-              className={`flex-1 rounded-md py-2 transition ${
-                mode === "password"
-                  ? "bg-night-600 text-white"
-                  : "text-mist-500"
-              }`}
+              type="submit"
+              disabled={status === "loading"}
+              className="mt-2 rounded-lg bg-porch-500 py-2.5 text-sm font-semibold text-night-950 transition hover:bg-porch-400 disabled:opacity-60"
             >
-              Mot de passe
+              {status === "loading" ? "Connexion..." : "Se connecter"}
             </button>
-            <button
-              onClick={() => setMode("magic")}
-              className={`flex-1 rounded-md py-2 transition ${
-                mode === "magic" ? "bg-night-600 text-white" : "text-mist-500"
-              }`}
-            >
-              Lien magique
-            </button>
-          </div>
-
-          {status === "sent" ? (
-            <p className="mt-6 rounded-lg border border-ok/30 bg-ok/10 px-4 py-3 text-sm text-white">
-              Lien envoyé. Vérifiez votre boîte mail pour vous connecter.
-            </p>
-          ) : (
-            <form
-              onSubmit={mode === "password" ? handlePasswordLogin : handleMagicLink}
-              className="mt-6 flex flex-col gap-3"
-            >
-              <input
-                type="email"
-                required
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="rounded-lg border border-night-600 bg-night-800 px-4 py-2.5 text-sm text-white placeholder:text-mist-500 focus:border-porch-500"
-              />
-              {mode === "password" && (
-                <input
-                  type="password"
-                  required
-                  placeholder="Mot de passe"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="rounded-lg border border-night-600 bg-night-800 px-4 py-2.5 text-sm text-white placeholder:text-mist-500 focus:border-porch-500"
-                />
-              )}
-              {status === "error" && (
-                <p className="text-sm text-warn">{errorMsg}</p>
-              )}
-              <button
-                type="submit"
-                disabled={status === "loading"}
-                className="mt-2 rounded-lg bg-porch-500 py-2.5 text-sm font-semibold text-night-950 transition hover:bg-porch-400 disabled:opacity-60"
-              >
-                {status === "loading"
-                  ? "Connexion..."
-                  : mode === "password"
-                  ? "Se connecter"
-                  : "Recevoir le lien"}
-              </button>
-            </form>
-          )}
+          </form>
         </div>
 
         <p className="mt-6 text-center text-sm text-mist-500">

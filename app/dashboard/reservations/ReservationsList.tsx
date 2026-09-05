@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 type Reservation = {
   id: string;
@@ -22,19 +22,25 @@ function formatDate(iso: string) {
   });
 }
 
-export default function ReservationsList() {
-  const [reservations, setReservations] = useState<Reservation[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export default function ReservationsList({
+  initialReservations,
+  initialError,
+}: {
+  // Rendu initial fourni par le Server Component parent (un seul aller-retour
+  // au chargement de la page, plutot qu'un fetch client + spinner) ; `load()`
+  // reste utilise pour les rafraichissements apres une action (suppression,
+  // generation de code...).
+  initialReservations: Reservation[];
+  initialError: string | null;
+}) {
+  const [reservations, setReservations] = useState<Reservation[]>(initialReservations);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(initialError);
   const [generatingId, setGeneratingId] = useState<string | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
   const [codeCreatedId, setCodeCreatedId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-
-  useEffect(() => {
-    load();
-  }, []);
 
   async function load() {
     setLoading(true);

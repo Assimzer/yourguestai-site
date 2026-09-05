@@ -6,7 +6,10 @@ import { createClient } from "@/lib/supabase/client";
 
 export default function SignupPage() {
   const supabase = createClient();
+  const [nomComplet, setNomComplet] = useState("");
   const [email, setEmail] = useState("");
+  const [telephone, setTelephone] = useState("");
+  const [nomConciergerie, setNomConciergerie] = useState("");
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "sent" | "error">(
     "idle"
@@ -22,6 +25,13 @@ export default function SignupPage() {
       password,
       options: {
         emailRedirectTo: `${window.location.origin}/dashboard`,
+        // Lu par le trigger Postgres handle_new_host (raw_user_meta_data)
+        // pour pré-remplir les colonnes correspondantes de la table hosts.
+        data: {
+          nom_complet: nomComplet.trim(),
+          telephone: telephone.trim(),
+          nom_conciergerie: nomConciergerie.trim(),
+        },
       },
     });
 
@@ -58,11 +68,34 @@ export default function SignupPage() {
           ) : (
             <form onSubmit={handleSignup} className="mt-6 flex flex-col gap-3">
               <input
+                type="text"
+                required
+                placeholder="Nom complet"
+                value={nomComplet}
+                onChange={(e) => setNomComplet(e.target.value)}
+                className="rounded-lg border border-night-600 bg-night-800 px-4 py-2.5 text-sm text-white placeholder:text-mist-500 focus:border-porch-500"
+              />
+              <input
                 type="email"
                 required
                 placeholder="Email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                className="rounded-lg border border-night-600 bg-night-800 px-4 py-2.5 text-sm text-white placeholder:text-mist-500 focus:border-porch-500"
+              />
+              <input
+                type="tel"
+                required
+                placeholder="Téléphone"
+                value={telephone}
+                onChange={(e) => setTelephone(e.target.value)}
+                className="rounded-lg border border-night-600 bg-night-800 px-4 py-2.5 text-sm text-white placeholder:text-mist-500 focus:border-porch-500"
+              />
+              <input
+                type="text"
+                placeholder="Nom de la conciergerie / entreprise (optionnel)"
+                value={nomConciergerie}
+                onChange={(e) => setNomConciergerie(e.target.value)}
                 className="rounded-lg border border-night-600 bg-night-800 px-4 py-2.5 text-sm text-white placeholder:text-mist-500 focus:border-porch-500"
               />
               <input

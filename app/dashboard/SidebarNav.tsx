@@ -34,22 +34,6 @@ export default function SidebarNav() {
           <div className="flex flex-col gap-0.5">
             {section.items.map((item) => {
               const active = pathname === item.href;
-              if (item.soon) {
-                return (
-                  <div
-                    key={item.href}
-                    className="flex items-center justify-between rounded-lg px-2 py-2 text-sm text-mist-500 opacity-60"
-                  >
-                    <span className="flex items-center gap-2">
-                      <span>{item.icon}</span>
-                      {item.label}
-                    </span>
-                    <span className="rounded-full bg-night-700 px-2 py-0.5 text-[10px]">
-                      Bientôt
-                    </span>
-                  </div>
-                );
-              }
               return (
                 <Link
                   key={item.href}
