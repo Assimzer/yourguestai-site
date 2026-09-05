@@ -86,7 +86,7 @@
     },
     {
       "parameters": {
-        "jsCode": "try {\n  let inputItem = {};\n  try {\n    inputItem = $input.item.json;\n  } catch (e) {}\n\n  let extraireData = {};\n  try {\n    const extraireItems = $('Extraire message1').all();\n    if (extraireItems && extraireItems.length > 0) extraireData = extraireItems[0].json;\n  } catch (e) {}\n\n  let whatsappData = {};\n  try {\n    const items = $('WhatsApp Trigger1').all();\n    if (items && items.length > 0) whatsappData = items[0].json;\n  } catch (e) {}\n\n  const waMessage =\n    whatsappData?.body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0]\n    || whatsappData?.entry?.[0]?.changes?.[0]?.value?.messages?.[0]\n    || {};\n\n  const telephone = extraireData.telephone || inputItem.telephone || inputItem.from || waMessage.from || '';\n  const message_texte = extraireData.message_texte || inputItem.message_texte || inputItem.message || inputItem.text || waMessage.text?.body || '';\n\n  const maintenant = new Date().toISOString();\n  const NUMERO_CONTACT_GENERAL = \"33781635224\";\n\n  function premiereValeur(champ) {\n    return Array.isArray(champ) ? champ[0] : champ;\n  }\n\n  let enrichies = [];\n  try {\n    enrichies = $('Chercher réservation1').all().map(i => {\n      const r = i.json;\n      const debut = r.Date_Debut ? new Date(r.Date_Debut) : null;\n      const fin = r.Date_Fin ? new Date(r.Date_Fin) : null;\n      const aujourdhui = new Date();\n\n      let statut = 'INCONNU';\n      if (debut && fin) {\n        if (aujourdhui >= debut && aujourdhui <= fin) statut = 'EN_COURS';\n        else if (aujourdhui < debut) statut = 'PROCHAIN';\n        else if (aujourdhui > fin) statut = 'PASSE';\n      }\n\n      return {\n        ...r,\n        _statut: statut,\n        _arrivee: debut ? debut.getTime() : 0,\n        _depart: fin ? fin.getTime() : 0\n      };\n    });\n  } catch (e) {}\n\n  const enCours = enrichies.find(r => r._statut === 'EN_COURS');\n  const prochaines = enrichies.filter(r => r._statut === 'PROCHAIN').sort((a, b) => a._arrivee - b._arrivee);\n  const passees = enrichies.filter(r => r._statut === 'PASSE').sort((a, b) => b._depart - a._depart);\n\n  const choisie = enCours || prochaines[0] || passees[0];\n  let statut = choisie ? choisie._statut : 'INCONNU';\n\n  let reservation = null;\n  if (choisie) {\n    const numeroProprietaireLogement =\n      premiereValeur(choisie.Numero_Proprietaire) ||\n      premiereValeur(choisie.Numero_Proprietaire_Defaut) ||\n      premiereValeur(choisie.telephone_voyageur) ||\n      NUMERO_CONTACT_GENERAL;\n\n    // id_logement : identifiant technique du logement (ex: \"airbnb_arbois\"),\n    // utilisé pour matcher avec la table Airtable \"Logements\" et pour le\n    // journal des messages. On essaie plusieurs noms de colonne possibles\n    // au cas où le champ Airtable n'est pas orthographié exactement pareil.\n    const idLogement =\n      premiereValeur(choisie['nom du logement']) ||\n      premiereValeur(choisie.Nom_Logement) ||\n      premiereValeur(choisie.nom_logement) ||\n      premiereValeur(choisie.id_logement) ||\n      '';\n\n    reservation = {\n      id_logement: idLogement,\n      cle_unique: premiereValeur(choisie.Cle_Unique) || '',\n      code_conv: premiereValeur(choisie.Code_conv) || premiereValeur(choisie.code_conv) || '',\n      nom_voyageur: choisie.Nom_Voyageur || '',\n      telephone_voyageur: premiereValeur(choisie.telephone_voyageur) || '',\n      date_arrivee: choisie.Date_Debut || '',\n      date_depart: choisie.Date_Fin || '',\n      logement: idLogement,\n      conciergerie: premiereValeur(choisie.Nom_Conciergerie) || '',\n      adresse: premiereValeur(choisie.adresse) || '',\n      ville: premiereValeur(choisie.ville) || premiereValeur(choisie.Ville) || '',\n      wifi_nom: premiereValeur(choisie.Wifi_Nom) || '',\n      wifi_mdp: premiereValeur(choisie.wifi_code) || '',\n      code_acces: premiereValeur(choisie.Code_Acces) || '',\n      heure_checkin: premiereValeur(choisie.checkin) || '',\n      heure_checkout: premiereValeur(choisie.checkout) || '',\n      parking: premiereValeur(choisie.parking) || '',\n      consignes_arrivee: premiereValeur(choisie.Consignes_Arrivee) || '',\n      consignes_depart: premiereValeur(choisie.regle) || '',\n      numero_proprietaire: numeroProprietaireLogement\n    };\n  }\n\n  const numeroProprietaireFinal = reservation ? reservation.numero_proprietaire : NUMERO_CONTACT_GENERAL;\n\n  let contexteReservation;\n  if (reservation) {\n    contexteReservation = [\n      `- Conciergerie : ${reservation.conciergerie}`,\n      `- Logement : ${reservation.logement}`,\n      `- Adresse : ${reservation.adresse}`,\n      `- Ville : ${reservation.ville}`,\n      `- Parking : ${reservation.parking}`,\n      `- Téléphone voyageur : ${reservation.telephone_voyageur}`,\n      `- Dates du séjour : du ${reservation.date_arrivee} au ${reservation.date_depart}`,\n      `- Heure de check-in : ${reservation.heure_checkin}`,\n      `- Heure de check-out : ${reservation.heure_checkout}`,\n      `- Wi-Fi : réseau \"${reservation.wifi_nom}\" / mot de passe \"${reservation.wifi_mdp}\"`,\n      `- Code d'accès : ${reservation.code_acces}`,\n      `- Code de conversation : ${reservation.code_conv}`,\n      `- Consignes arrivée : ${reservation.consignes_arrivee}`,\n      `- Consignes départ (règles) : ${reservation.consignes_depart}`\n    ].join('\\n');\n  } else {\n    contexteReservation = '- Aucune réservation trouvée pour ce numéro : tu ne connais ni logement ni conciergerie.';\n  }\n\n  const ownerAlertPrefix = reservation\n    ? `Conciergerie : ${reservation.conciergerie}\\nLogement : ${reservation.logement}`\n    : 'Conciergerie : Inconnue\\nLogement : Inconnu';\n\n  return [{\n    json: {\n      telephone,\n      message_texte,\n      maintenant,\n      statut,\n      reservation,\n      numero_proprietaire: numeroProprietaireFinal,\n      contexte_reservation: contexteReservation,\n      owner_alert_prefix: ownerAlertPrefix\n    }\n  }];\n  // Récupère la ville du logement (depuis Airtable, un champ existant)\nconst ville = $json.ville_logement || $json.ville || '';\n\nconst partnerId = 'BCNQE2V';\nconst villeEncodee = encodeURIComponent(ville);\n\nconst lienGetYourGuide = `https://www.getyourguide.fr/s/?q=${villeEncodee}&partner_id=${partnerId}&cmp=share_to_earn`;\n\nreturn {\n  ...$json,\n  lien_activites: lienGetYourGuide,\n};\n} catch (err) {\n  return [{\n    json: {\n      erreur: true,\n      message_erreur: err.message,\n      stack: err.stack\n    }\n  }];\n  \n}"
+        "jsCode": "try {\n  let inputItem = {};\n  try {\n    inputItem = $input.item.json;\n  } catch (e) {}\n\n  let extraireData = {};\n  try {\n    const extraireItems = $('Extraire message1').all();\n    if (extraireItems && extraireItems.length > 0) extraireData = extraireItems[0].json;\n  } catch (e) {}\n\n  let whatsappData = {};\n  try {\n    const items = $('WhatsApp Trigger1').all();\n    if (items && items.length > 0) whatsappData = items[0].json;\n  } catch (e) {}\n\n  const waMessage =\n    whatsappData?.body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0]\n    || whatsappData?.entry?.[0]?.changes?.[0]?.value?.messages?.[0]\n    || {};\n\n  const telephone = extraireData.telephone || inputItem.telephone || inputItem.from || waMessage.from || '';\n  const message_texte = extraireData.message_texte || inputItem.message_texte || inputItem.message || inputItem.text || waMessage.text?.body || '';\n\n  const maintenant = new Date().toISOString();\n  const NUMERO_CONTACT_GENERAL = \"33781635224\";\n\n  function premiereValeur(champ) {\n    return Array.isArray(champ) ? champ[0] : champ;\n  }\n\n  let enrichies = [];\n  try {\n    enrichies = $('Chercher réservation1').all().map(i => {\n      const r = i.json;\n      const debut = r.Date_Debut ? new Date(r.Date_Debut) : null;\n      const fin = r.Date_Fin ? new Date(r.Date_Fin) : null;\n      const aujourdhui = new Date();\n\n      let statut = 'INCONNU';\n      if (debut && fin) {\n        if (aujourdhui >= debut && aujourdhui <= fin) statut = 'EN_COURS';\n        else if (aujourdhui < debut) statut = 'PROCHAIN';\n        else if (aujourdhui > fin) statut = 'PASSE';\n      }\n\n      return {\n        ...r,\n        _statut: statut,\n        _arrivee: debut ? debut.getTime() : 0,\n        _depart: fin ? fin.getTime() : 0\n      };\n    });\n  } catch (e) {}\n\n  const enCours = enrichies.find(r => r._statut === 'EN_COURS');\n  const prochaines = enrichies.filter(r => r._statut === 'PROCHAIN').sort((a, b) => a._arrivee - b._arrivee);\n  const passees = enrichies.filter(r => r._statut === 'PASSE').sort((a, b) => b._depart - a._depart);\n\n  const choisie = enCours || prochaines[0] || passees[0];\n  let statut = choisie ? choisie._statut : 'INCONNU';\n\n  let reservation = null;\n  if (choisie) {\n    const numeroProprietaireLogement =\n      premiereValeur(choisie.Numero_Proprietaire) ||\n      premiereValeur(choisie.Numero_Proprietaire_Defaut) ||\n      premiereValeur(choisie.telephone_voyageur) ||\n      NUMERO_CONTACT_GENERAL;\n\n    const idLogement =\n      premiereValeur(choisie['nom du logement']) ||\n      premiereValeur(choisie.Nom_Logement) ||\n      premiereValeur(choisie.nom_logement) ||\n      premiereValeur(choisie.id_logement) ||\n      '';\n\n    reservation = {\n      id_logement: idLogement,\n      cle_unique: premiereValeur(choisie.Cle_Unique) || '',\n      code_conv: premiereValeur(choisie.Code_conv) || premiereValeur(choisie.code_conv) || '',\n      nom_voyageur: choisie.Nom_Voyageur || '',\n      telephone_voyageur: premiereValeur(choisie.telephone_voyageur) || '',\n      date_arrivee: choisie.Date_Debut || '',\n      date_depart: choisie.Date_Fin || '',\n      logement: idLogement,\n      conciergerie: premiereValeur(choisie.Nom_Conciergerie) || '',\n      adresse: premiereValeur(choisie.adresse) || '',\n      ville: premiereValeur(choisie.ville) || premiereValeur(choisie.Ville) || '',\n      wifi_nom: premiereValeur(choisie.Wifi_Nom) || '',\n      wifi_mdp: premiereValeur(choisie.wifi_code) || '',\n      code_acces: premiereValeur(choisie.Code_Acces) || '',\n      heure_checkin: premiereValeur(choisie.checkin) || '',\n      heure_checkout: premiereValeur(choisie.checkout) || '',\n      parking: premiereValeur(choisie.parking) || '',\n      consignes_arrivee: premiereValeur(choisie.Consignes_Arrivee) || '',\n      consignes_depart: premiereValeur(choisie.regle) || '',\n      numero_proprietaire: numeroProprietaireLogement\n    };\n  }\n\n  const numeroProprietaireFinal = reservation ? reservation.numero_proprietaire : NUMERO_CONTACT_GENERAL;\n\n  // Lien d'affiliation GetYourGuide, construit à partir de la ville du\n  // logement déjà résolue dans `reservation`. Vide si aucune réservation\n  // ou aucune ville renseignée dans Airtable.\n  const PARTNER_ID_GETYOURGUIDE = 'BCNQE2V';\n  let lienActivites = '';\n  if (reservation && reservation.ville) {\n    const villeEncodee = encodeURIComponent(reservation.ville);\n    lienActivites = `https://www.getyourguide.fr/s/?q=${villeEncodee}&partner_id=${PARTNER_ID_GETYOURGUIDE}&cmp=share_to_earn`;\n  }\n\n  let contexteReservation;\n  if (reservation) {\n    contexteReservation = [\n      `- Conciergerie : ${reservation.conciergerie}`,\n      `- Logement : ${reservation.logement}`,\n      `- Adresse : ${reservation.adresse}`,\n      `- Ville : ${reservation.ville}`,\n      `- Parking : ${reservation.parking}`,\n      `- Téléphone voyageur : ${reservation.telephone_voyageur}`,\n      `- Dates du séjour : du ${reservation.date_arrivee} au ${reservation.date_depart}`,\n      `- Heure de check-in : ${reservation.heure_checkin}`,\n      `- Heure de check-out : ${reservation.heure_checkout}`,\n      `- Wi-Fi : réseau \"${reservation.wifi_nom}\" / mot de passe \"${reservation.wifi_mdp}\"`,\n      `- Code d'accès : ${reservation.code_acces}`,\n      `- Code de conversation : ${reservation.code_conv}`,\n      `- Consignes arrivée : ${reservation.consignes_arrivee}`,\n      `- Consignes départ (règles) : ${reservation.consignes_depart}`,\n      lienActivites ? `- Lien activités locales (à proposer si pertinent) : ${lienActivites}` : ''\n    ].filter(Boolean).join('\\n');\n  } else {\n    contexteReservation = '- Aucune réservation trouvée pour ce numéro : tu ne connais ni logement ni conciergerie.';\n  }\n\n  const ownerAlertPrefix = reservation\n    ? `Conciergerie : ${reservation.conciergerie}\\nLogement : ${reservation.logement}`\n    : 'Conciergerie : Inconnue\\nLogement : Inconnu';\n\n  return [{\n    json: {\n      telephone,\n      message_texte,\n      maintenant,\n      statut,\n      reservation,\n      numero_proprietaire: numeroProprietaireFinal,\n      contexte_reservation: contexteReservation,\n      owner_alert_prefix: ownerAlertPrefix,\n      lien_activites: lienActivites\n    }\n  }];\n} catch (err) {\n  return [{\n    json: {\n      erreur: true,\n      message_erreur: err.message,\n      stack: err.stack\n    }\n  }];\n}"
       },
       "id": "a7a0218e-2135-4937-a9bd-19d4ba7ba0fa",
       "name": "Déterminer statut1",
@@ -140,12 +140,12 @@
       "parameters": {
         "toolDescription": "Alerte IMMÉDIATEMENT le propriétaire par WhatsApp pour : voyageur enfermé dehors/dedans, panne électrique, fuite d'eau, panne de chauffage/climatisation, signalement de sécurité, ou toute question dont la réponse n'est pas connue. Résume le problème en 1-2 phrases avant transmission.",
         "method": "POST",
-        "url": "=https://graph.facebook.com/v20.0/1289499704241825/messages",
+        "url": "=https://guestai.app.n8n.cloud/webhook/escalade-relay",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"messaging_product\": \"whatsapp\",\n  \"to\": \"{{ $('Déterminer statut1').item.json.numero_proprietaire }}\",\n  \"type\": \"text\",\n  \"text\": {\n    \"body\": \"⚠️ Alerte concierge IA - Logement : {{ $('Déterminer statut1').item.json.reservation?.logement || 'Inconnu' }} | Voyageur : {{ $('Déterminer statut1').item.json.telephone }} | Résumé : {resume_probleme}\"\n  }\n}",
+        "jsonBody": "={\n  \"telephone\": \"{{ $('Déterminer statut1').item.json.telephone }}\",\n  \"logement\": \"{{ $('Déterminer statut1').item.json.reservation?.logement || 'Inconnu' }}\",\n  \"numero_proprietaire\": \"{{ $('Déterminer statut1').item.json.numero_proprietaire }}\",\n  \"message_record_id\": \"{{ $('Create a record1').item.json.id }}\",\n  \"resume_probleme\": \"{resume_probleme}\"\n}",
         "placeholderDefinitions": {
           "values": [
             {
@@ -167,7 +167,7 @@
       "credentials": {
         "httpHeaderAuth": {
           "id": "cGzD6Q4ZicsM88CI",
-          "name": "Header Auth account"
+          "name": "n8n perplexcity"
         }
       }
     },
@@ -217,7 +217,7 @@
       "credentials": {
         "httpHeaderAuth": {
           "id": "cGzD6Q4ZicsM88CI",
-          "name": "Header Auth account"
+          "name": "n8n perplexcity"
         }
       }
     },
@@ -246,13 +246,13 @@
       "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
       "typeVersion": 1.1,
       "position": [
-        2176,
-        864
+        2224,
+        896
       ],
       "credentials": {
         "httpHeaderAuth": {
           "id": "cGzD6Q4ZicsM88CI",
-          "name": "Header Auth account"
+          "name": "n8n perplexcity"
         }
       }
     },
@@ -261,7 +261,7 @@
         "promptType": "define",
         "text": "={{ $('Déterminer statut1').first().json.message_texte }}",
         "options": {
-          "systemMessage": "=Tu es le concierge IA multi-conciergeries. Tu communiques via WhatsApp avec les voyageurs de plusieurs logements gérés par différentes conciergeries. Le numéro WhatsApp affiché est le même pour tous (0624099289), mais chaque voyageur est rattaché à UN SEUL logement précis : ne mélange jamais les informations d'un autre logement.\n\nDONNÉES DE LA CONVERSATION ACTUELLE :\n- Téléphone voyageur : {{ $('Déterminer statut1').first().json.telephone }}\n- Date/heure actuelle : {{ $('Déterminer statut1').first().json.maintenant }}\n- Statut du voyageur : {{ $('Déterminer statut1').first().json.statut }}\n- Numéro du propriétaire/conciergerie : {{ $('Déterminer statut1').first().json.numero_proprietaire }}\n\nINFORMATIONS DE LA RÉSERVATION (si déjà identifiée) :\n- Nom du voyageur : {{ $('Déterminer statut1').first().json.reservation.nom_voyageur }}\n- Logement : {{ $('Déterminer statut1').first().json.reservation.logement }}\n- Conciergerie : {{ $('Déterminer statut1').first().json.reservation.conciergerie }}\n- Adresse : {{ $('Déterminer statut1').first().json.reservation.adresse }}\n- Ville : {{ $('Déterminer statut1').first().json.reservation.ville }}\n- Parking : {{ $('Déterminer statut1').first().json.reservation.parking }}\n- Dates du séjour : du {{ $('Déterminer statut1').first().json.reservation.date_arrivee }} au {{ $('Déterminer statut1').first().json.reservation.date_depart }}\n- Heure de check-in : {{ $('Déterminer statut1').first().json.reservation.heure_checkin }}\n- Heure de check-out : {{ $('Déterminer statut1').first().json.reservation.heure_checkout }}\n- Wi-Fi : réseau \"{{ $('Déterminer statut1').first().json.reservation.wifi_nom }}\" / mot de passe \"{{ $('Déterminer statut1').first().json.reservation.wifi_mdp }}\"\n- Code d'accès : {{ $('Déterminer statut1').first().json.reservation.code_acces }}\n- Consignes arrivée : {{ $('Déterminer statut1').first().json.reservation.consignes_arrivee }}\n- Consignes départ (règles) : {{ $('Déterminer statut1').first().json.reservation.consignes_depart }}\n\nPROCÉDURE D'IDENTIFICATION ET SAUVEGARDE (À SUIVRE STRICTEMENT, SI LE STATUT EST INCONNU) :\n\nSi le statut du voyageur est INCONNU, cela signifie qu'aucune réservation n'est encore rattachée à son numéro. Les informations de réservation ci-dessus sont alors vides — ignore-les complètement et suis cette procédure :\n\n1. Demande poliment au voyageur son code de conversation personnel (`code_conv`), sans jamais l'inventer ni le déduire : il doit provenir exclusivement du message que le voyageur vient de t'envoyer.\n\n2. DÈS QUE LE VOYAGEUR FOURNIT UN CODE (ex: \"NANYOKIGROS\") :\n   - Extrais uniquement le code lui-même, sans espace ni saut de ligne avant ou après (ex: si le voyageur écrit \"mon code est LT01\", tu dois utiliser exactement \"LT01\", rien d'autre).\n   - ÉTAPE A : Appelle l'outil `search_reservation` avec ce `code_conv` exact (nettoyé, sans espace ni retour à la ligne) pour retrouver et vérifier la réservation correspondante.\n   - ÉTAPE B : Si la réservation est trouvée, appelle immédiatement l'outil `sauvegarder_telephone_voyageur` avec EXACTEMENT ces deux paramètres, ni plus ni moins :\n     - `code_conv` : le même code exact utilisé à l'étape A (le code tapé par le voyageur, nettoyé, jamais une valeur du contexte).\n     - `telephone` : {{ $('Déterminer statut1').first().json.telephone }}.\n   - N'inclus JAMAIS de paramètre `cle_unique`, `Cle_Unique` ou toute autre donnée dans cet appel d'outil : seuls `code_conv` et `telephone` doivent être transmis.\n   - Si le code ne correspond à aucune réservation, informe poliment le voyageur que le code n'est pas reconnu et invite-le à le revérifier ou à contacter le propriétaire.\n   - NE RÉPONDS PAS avec les détails du logement tant que ces deux actions d'outils n'ont pas été exécutées avec succès pour la même réservation.\n\nRÈGLES PAR STATUT :\n- EN_COURS : aide complète sur CE logement précis.\n- PROCHAIN : infos de pré-arrivée uniquement (adresse, horaire). JAMAIS de codes d'accès, JAMAIS de Wi-Fi. En cas d'insistance, redirige poliment vers le propriétaire.\n- PASSE / INCONNU : réponse brève, invite à contacter le propriétaire ou demande le `code_conv`.\n\nRÈGLE CRITIQUE SUR LA LOCALISATION :\nUtilise uniquement les informations de logement fournies dans le contexte ci-dessus. Ne te base jamais sur des informations de villes ou d'adresses mentionnées dans l'historique de la conversation.\n\nPÉRIMÈTRE STRICT :\nTu es un concierge dédié exclusivement au séjour du voyageur dans le logement réservé. Tu réponds uniquement aux sujets suivants : informations sur le logement, consignes de séjour, recommandations locales et questions pratiques liées directement au séjour.\nPour toute demande hors de ce périmètre, réponds poliment :\n\"Je suis là pour vous accompagner pendant votre séjour au {{ $('Déterminer statut1').first().json.reservation.logement }} — pour ce type de demande, je vous invite à utiliser un moteur de recherche ou une app dédiée. Puis-je vous aider avec autre chose concernant votre séjour ?\"\n\nLANGUE ET TON :\nDétecte la langue du voyageur et réponds dans cette même langue. Ton professionnel, chaleureux et concis.\n\nESCALADE VERS LE PROPRIÉTAIRE :\nSi tu ne peux pas répondre à une question technique ou urgente, donne le numéro : {{ $('Déterminer statut1').first().json.numero_proprietaire }}.\n\nOUTILS DISPONIBLES :\n1. search_reservation : recherche une réservation dans Airtable à partir du paramètre `code_conv` fourni par le voyageur dans son message.\n2. sauvegarder_telephone_voyageur : met à jour la ligne Airtable correspondante au `code_conv` exact pour y inscrire le numéro du voyageur via le paramètre `telephone`. N'accepte que ces deux paramètres.\n3. get_local_details : recommandations restaurants/activités près du logement.\n4. send_location : envoie une localisation WhatsApp au voyageur.\n5. notify_owner : déclenche IMMÉDIATEMENT pour les urgences réelles (enfermé dehors, fuite d'eau, panne électrique)."
+          "systemMessage": "=Tu es le concierge IA multi-conciergeries. Tu communiques via WhatsApp avec les voyageurs de plusieurs logements gérés par différentes conciergeries. Le numéro WhatsApp affiché est le même pour tous (0624099289), mais chaque voyageur est rattaché à UN SEUL logement précis : ne mélange jamais les informations d'un autre logement.\n\nDONNÉES DE LA CONVERSATION ACTUELLE :\n- Téléphone voyageur : {{ $('Déterminer statut1').first().json.telephone }}\n- Date/heure actuelle : {{ $('Déterminer statut1').first().json.maintenant }}\n- Statut du voyageur : {{ $('Déterminer statut1').first().json.statut }}\n- Numéro du propriétaire/conciergerie : {{ $('Déterminer statut1').first().json.numero_proprietaire }}\n\nINFORMATIONS DE LA RÉSERVATION (si déjà identifiée) :\n- Lien activités locales : {{ $('Déterminer statut1').first().json.lien_activites }}\n- Nom du voyageur : {{ $('Déterminer statut1').first().json.reservation.nom_voyageur }}\n- Logement : {{ $('Déterminer statut1').first().json.reservation.logement }}\n- Conciergerie : {{ $('Déterminer statut1').first().json.reservation.conciergerie }}\n- Adresse : {{ $('Déterminer statut1').first().json.reservation.adresse }}\n- Ville : {{ $('Déterminer statut1').first().json.reservation.ville }}\n- Parking : {{ $('Déterminer statut1').first().json.reservation.parking }}\n- Dates du séjour : du {{ $('Déterminer statut1').first().json.reservation.date_arrivee }} au {{ $('Déterminer statut1').first().json.reservation.date_depart }}\n- Heure de check-in : {{ $('Déterminer statut1').first().json.reservation.heure_checkin }}\n- Heure de check-out : {{ $('Déterminer statut1').first().json.reservation.heure_checkout }}\n- Wi-Fi : réseau \"{{ $('Déterminer statut1').first().json.reservation.wifi_nom }}\" / mot de passe \"{{ $('Déterminer statut1').first().json.reservation.wifi_mdp }}\"\n- Code d'accès : {{ $('Déterminer statut1').first().json.reservation.code_acces }}\n- Consignes arrivée : {{ $('Déterminer statut1').first().json.reservation.consignes_arrivee }}\n- Consignes départ (règles) : {{ $('Déterminer statut1').first().json.reservation.consignes_depart }}\nRECOMMANDATIONS D'ACTIVITÉS LOCALES :\nSi le voyageur demande des idées de sorties, d'activités touristiques, de \nvisites ou de choses à faire dans la région, utilise l'outil \n`get_local_details` pour les recommandations de proximité (restaurants, \nlieux). En complément, si un \"Lien activités locales\" est renseigné \nci-dessus, propose-le naturellement à la fin de ta réponse pour que le \nvoyageur puisse réserver des activités en ligne — par exemple : \"Vous \npouvez aussi trouver et réserver des activités dans la région ici : [lien]\". \nNe mentionne jamais ce lien si le voyageur ne pose pas ce type de question, \net ne le répète pas plusieurs fois dans la même conversation.\n\nPROCÉDURE D'IDENTIFICATION ET SAUVEGARDE (À SUIVRE STRICTEMENT, SI LE STATUT EST INCONNU) :\n\nSi le statut du voyageur est INCONNU, cela signifie qu'aucune réservation n'est encore rattachée à son numéro. Les informations de réservation ci-dessus sont alors vides — ignore-les complètement et suis cette procédure :\n\n1. Demande poliment au voyageur son code de conversation personnel (`code_conv`), sans jamais l'inventer ni le déduire : il doit provenir exclusivement du message que le voyageur vient de t'envoyer.\n\n2. DÈS QUE LE VOYAGEUR FOURNIT UN CODE (ex: \"NANYOKIGROS\") :\n   - Extrais uniquement le code lui-même, sans espace ni saut de ligne avant ou après (ex: si le voyageur écrit \"mon code est LT01\", tu dois utiliser exactement \"LT01\", rien d'autre).\n   - ÉTAPE A : Appelle l'outil `search_reservation` avec ce `code_conv` exact (nettoyé, sans espace ni retour à la ligne) pour retrouver et vérifier la réservation correspondante.\n   - ÉTAPE B : Si la réservation est trouvée, appelle immédiatement l'outil `sauvegarder_telephone_voyageur` avec EXACTEMENT ces deux paramètres, ni plus ni moins :\n     - `code_conv` : le même code exact utilisé à l'étape A (le code tapé par le voyageur, nettoyé, jamais une valeur du contexte).\n     - `telephone` : {{ $('Déterminer statut1').first().json.telephone }}.\n   - N'inclus JAMAIS de paramètre `cle_unique`, `Cle_Unique` ou toute autre donnée dans cet appel d'outil : seuls `code_conv` et `telephone` doivent être transmis.\n   - Si le code ne correspond à aucune réservation, informe poliment le voyageur que le code n'est pas reconnu et invite-le à le revérifier ou à contacter le propriétaire.\n   - NE RÉPONDS PAS avec les détails du logement tant que ces deux actions d'outils n'ont pas été exécutées avec succès pour la même réservation.\n\nRÈGLES PAR STATUT :\n- EN_COURS : aide complète sur CE logement précis.\n- PROCHAIN : infos de pré-arrivée uniquement (adresse, horaire). JAMAIS de codes d'accès, JAMAIS de Wi-Fi. En cas d'insistance, redirige poliment vers le propriétaire.\n- PASSE / INCONNU : réponse brève, invite à contacter le propriétaire ou demande le `code_conv`.\n\nRÈGLE CRITIQUE SUR LA LOCALISATION :\nUtilise uniquement les informations de logement fournies dans le contexte ci-dessus. Ne te base jamais sur des informations de villes ou d'adresses mentionnées dans l'historique de la conversation.\n\nPÉRIMÈTRE STRICT :\nTu es un concierge dédié exclusivement au séjour du voyageur dans le logement réservé. Tu réponds uniquement aux sujets suivants : informations sur le logement, consignes de séjour, recommandations locales et questions pratiques liées directement au séjour.\nPour toute demande hors de ce périmètre, réponds poliment :\n\"Je suis là pour vous accompagner pendant votre séjour au {{ $('Déterminer statut1').first().json.reservation.logement }} — pour ce type de demande, je vous invite à utiliser un moteur de recherche ou une app dédiée. Puis-je vous aider avec autre chose concernant votre séjour ?\"\n\nLANGUE ET TON :\nDétecte la langue du voyageur et réponds dans cette même langue. Ton professionnel, chaleureux et concis.\n\nESCALADE VERS LE PROPRIÉTAIRE :\nSi tu ne peux pas répondre à une question technique ou urgente, donne le numéro : {{ $('Déterminer statut1').first().json.numero_proprietaire }}.\n\nOUTILS DISPONIBLES :\n1. search_reservation : recherche une réservation dans Airtable à partir du paramètre `code_conv` fourni par le voyageur dans son message.\n2. sauvegarder_telephone_voyageur : met à jour la ligne Airtable correspondante au `code_conv` exact pour y inscrire le numéro du voyageur via le paramètre `telephone`. N'accepte que ces deux paramètres.\n3. get_local_details : recommandations restaurants/activités près du logement.\n4. send_location : envoie une localisation WhatsApp au voyageur.\n5. notify_owner : déclenche IMMÉDIATEMENT pour les urgences réelles (enfermé dehors, fuite d'eau, panne électrique)."
         }
       },
       "id": "f2a9c1bb-4980-4284-8a77-a75277a48edd",
@@ -2543,7 +2543,9 @@
           "mappingMode": "defineBelow",
           "value": {
             "id_logement": "={{ $('Déterminer statut1').item.json.reservation ? $('Déterminer statut1').item.json.reservation.id_logement : undefined }}",
-            "telephone": "={{ $('Déterminer statut1').item.json.telephone }}"
+            "telephone": "={{ $('Déterminer statut1').item.json.telephone }}",
+            "date": "={{ $('Déterminer statut1').item.json.maintenant }}",
+            "sens": "entrant"
           },
           "matchingColumns": [],
           "schema": [
@@ -2578,7 +2580,7 @@
               "display": true,
               "type": "dateTime",
               "readOnly": false,
-              "removed": true
+              "removed": false
             },
             {
               "id": "sens",
@@ -2599,7 +2601,7 @@
                 }
               ],
               "readOnly": false,
-              "removed": true
+              "removed": false
             },
             {
               "id": "Logement (linked)",
@@ -2767,8 +2769,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        864,
-        544
+        928,
+        576
       ],
       "id": "0213460c-6a48-453f-b0a7-b5cf629edde2",
       "name": "Respond to Webhook7"
@@ -5030,7 +5032,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const items = $input.all();\n\nconst messages = items.map((item) => {\n  const f = item.json.fields || {};\n\n  return {\n    id: item.json.id,\n    id_logement: f[\"id_logement\"] || \"\",\n    telephone: f[\"telephone\"] || \"\",\n    date: f[\"date\"] || \"\",\n    sens: f[\"sens\"] || \"\",\n  };\n});\n\nreturn [{ json: { messages } }];"
+        "jsCode": "const items = $input.all();\n\nconst messages = items.map((item) => {\n  const f = item.json.fields || {};\n\n  return {\n    id: item.json.id,\n    id_logement: f[\"id_logement\"] || \"\",\n    telephone: f[\"telephone\"] || \"\",\n    date: f[\"date\"] || \"\",\n    sens: f[\"sens\"] || \"\",\n    escalade: !!f[\"escalade\"],\n  };\n});\n\nreturn [{ json: { messages } }];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -5040,6 +5042,130 @@
       ],
       "id": "c75ca8c0-b6b8-4fc9-8f40-da69a2e9b712",
       "name": "Code in JavaScript6"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "escalade-relay",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        2048,
+        1264
+      ],
+      "id": "6a5e9f2b-7b13-4a2e-9d4a-6e1a2c9b0f11",
+      "name": "escalade-relay",
+      "webhookId": "6a5e9f2b-7b13-4a2e-9d4a-6e1a2c9b0f11"
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "=1289499704241825",
+        "recipientPhoneNumber": "={{ $json.body.numero_proprietaire }}",
+        "textBody": "=⚠️ Alerte concierge IA - Logement : {{ $json.body.logement }} | Voyageur : {{ $json.body.telephone }} | Résumé : {{ $json.body.resume_probleme }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1,
+      "position": [
+        2272,
+        1264
+      ],
+      "id": "c1d3e5a7-9f21-4b6c-8a3d-2b7e4f6a1c22",
+      "name": "Envoyer alerte proprietaire (relay)",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "cCWTApgOYy3Wfs4h",
+          "name": "WhatsApp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "appU4bRp75gisWKzx",
+          "mode": "list",
+          "cachedResultName": "Conciergerie Logements",
+          "cachedResultUrl": "https://airtable.com/appU4bRp75gisWKzx"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblGuFOIXtDxHC5gk",
+          "mode": "list",
+          "cachedResultName": "Messages",
+          "cachedResultUrl": "https://airtable.com/appU4bRp75gisWKzx/tblGuFOIXtDxHC5gk"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id": "={{ $('escalade-relay').item.json.body.message_record_id }}",
+            "escalade": true
+          },
+          "matchingColumns": ["id"],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "escalade",
+              "displayName": "escalade",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        2496,
+        1264
+      ],
+      "id": "d2e4f6a8-a032-4c7d-9b5e-3c8f5a7b2d33",
+      "name": "Marquer escalade (Messages)",
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "su4FBLDPLE74YfrP",
+          "name": "Airtable account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $('Envoyer alerte proprietaire (relay)').item.json }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        2720,
+        1264
+      ],
+      "id": "e3f5a7b9-b143-4d8e-ac6f-4d9a6b8c3e44",
+      "name": "Respond to Webhook - escalade-relay"
     }
   ],
   "pinData": {
@@ -5064,10 +5190,10 @@
             {
               "from": "33781635224",
               "from_user_id": "FR.1340101618106695",
-              "id": "wamid.HBgLMzM3ODE2MzUyMjQVAgASGBQzQThDQ0M3REVEMjNDNDE0QTI4RgA=",
-              "timestamp": "1788012870",
+              "id": "wamid.HBgLMzM3ODE2MzUyMjQVAgASGBYzRUIwREQ4Q0E5OUZCMjFBNjk1MzU2AA==",
+              "timestamp": "1788543558",
               "text": {
-                "body": "La radiateur est cassé"
+                "body": "donne moi des idée de sortie"
               },
               "type": "text"
             }
@@ -5928,14 +6054,47 @@
           }
         ]
       ]
+    },
+    "escalade-relay": {
+      "main": [
+        [
+          {
+            "node": "Envoyer alerte proprietaire (relay)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Envoyer alerte proprietaire (relay)": {
+      "main": [
+        [
+          {
+            "node": "Marquer escalade (Messages)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Marquer escalade (Messages)": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook - escalade-relay",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "active": false,
+  "active": true,
   "settings": {
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "ec8d02af-0b6a-4336-868a-59a439a0cc16",
+  "versionId": "34e03778-0f14-4585-817a-604e0d15a5d5",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "2550996d526c4fe303c5fb7104936c6fffa1220a1b162392d1d475f9e9c7afbf"
