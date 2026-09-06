@@ -7,13 +7,13 @@
         "height": 656,
         "width": 452
       },
-      "id": "c4b99e8e-6748-4519-a2aa-59c50ef2e55b",
+      "id": "83e208e0-a7b1-40a9-8d63-999d994e5171",
       "name": "Sticky Note - Setup1",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        32,
-        0
+        -496,
+        384
       ]
     },
     {
@@ -27,13 +27,13 @@
           ]
         }
       },
-      "id": "b995fdb5-3f86-4668-a40f-c433c7016b75",
+      "id": "45977136-72e2-4d21-afe4-44ae807149fe",
       "name": "WhatsApp Trigger1",
       "type": "n8n-nodes-base.whatsAppTrigger",
       "typeVersion": 1,
       "position": [
-        192,
-        720
+        -336,
+        1104
       ],
       "webhookId": "concierge-arbois-whatsapp",
       "credentials": {
@@ -75,26 +75,26 @@
         },
         "options": {}
       },
-      "id": "abc9430f-1a53-4588-9410-5e0e09d0522d",
+      "id": "b68ad26a-97ad-4568-bd5e-46487ad47724",
       "name": "Extraire message1",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        752,
-        704
+        224,
+        1088
       ]
     },
     {
       "parameters": {
         "jsCode": "try {\n  let inputItem = {};\n  try {\n    inputItem = $input.item.json;\n  } catch (e) {}\n\n  let extraireData = {};\n  try {\n    const extraireItems = $('Extraire message1').all();\n    if (extraireItems && extraireItems.length > 0) extraireData = extraireItems[0].json;\n  } catch (e) {}\n\n  let whatsappData = {};\n  try {\n    const items = $('WhatsApp Trigger1').all();\n    if (items && items.length > 0) whatsappData = items[0].json;\n  } catch (e) {}\n\n  const waMessage =\n    whatsappData?.body?.entry?.[0]?.changes?.[0]?.value?.messages?.[0]\n    || whatsappData?.entry?.[0]?.changes?.[0]?.value?.messages?.[0]\n    || {};\n\n  const telephone = extraireData.telephone || inputItem.telephone || inputItem.from || waMessage.from || '';\n  const message_texte = extraireData.message_texte || inputItem.message_texte || inputItem.message || inputItem.text || waMessage.text?.body || '';\n\n  const maintenant = new Date().toISOString();\n  const NUMERO_CONTACT_GENERAL = \"33781635224\";\n\n  function premiereValeur(champ) {\n    return Array.isArray(champ) ? champ[0] : champ;\n  }\n\n  let enrichies = [];\n  try {\n    enrichies = $('Chercher réservation1').all().map(i => {\n      const r = i.json;\n      const debut = r.Date_Debut ? new Date(r.Date_Debut) : null;\n      const fin = r.Date_Fin ? new Date(r.Date_Fin) : null;\n      const aujourdhui = new Date();\n\n      let statut = 'INCONNU';\n      if (debut && fin) {\n        if (aujourdhui >= debut && aujourdhui <= fin) statut = 'EN_COURS';\n        else if (aujourdhui < debut) statut = 'PROCHAIN';\n        else if (aujourdhui > fin) statut = 'PASSE';\n      }\n\n      return {\n        ...r,\n        _statut: statut,\n        _arrivee: debut ? debut.getTime() : 0,\n        _depart: fin ? fin.getTime() : 0\n      };\n    });\n  } catch (e) {}\n\n  const enCours = enrichies.find(r => r._statut === 'EN_COURS');\n  const prochaines = enrichies.filter(r => r._statut === 'PROCHAIN').sort((a, b) => a._arrivee - b._arrivee);\n  const passees = enrichies.filter(r => r._statut === 'PASSE').sort((a, b) => b._depart - a._depart);\n\n  const choisie = enCours || prochaines[0] || passees[0];\n  let statut = choisie ? choisie._statut : 'INCONNU';\n\n  let reservation = null;\n  if (choisie) {\n    const numeroProprietaireLogement =\n      premiereValeur(choisie.Numero_Proprietaire) ||\n      premiereValeur(choisie.Numero_Proprietaire_Defaut) ||\n      premiereValeur(choisie.telephone_voyageur) ||\n      NUMERO_CONTACT_GENERAL;\n\n    const idLogement =\n      premiereValeur(choisie['nom du logement']) ||\n      premiereValeur(choisie.Nom_Logement) ||\n      premiereValeur(choisie.nom_logement) ||\n      premiereValeur(choisie.id_logement) ||\n      '';\n\n    reservation = {\n      id_logement: idLogement,\n      cle_unique: premiereValeur(choisie.Cle_Unique) || '',\n      code_conv: premiereValeur(choisie.Code_conv) || premiereValeur(choisie.code_conv) || '',\n      nom_voyageur: choisie.Nom_Voyageur || '',\n      telephone_voyageur: premiereValeur(choisie.telephone_voyageur) || '',\n      date_arrivee: choisie.Date_Debut || '',\n      date_depart: choisie.Date_Fin || '',\n      logement: idLogement,\n      conciergerie: premiereValeur(choisie.Nom_Conciergerie) || '',\n      adresse: premiereValeur(choisie.adresse) || '',\n      ville: premiereValeur(choisie.ville) || premiereValeur(choisie.Ville) || '',\n      wifi_nom: premiereValeur(choisie.Wifi_Nom) || '',\n      wifi_mdp: premiereValeur(choisie.wifi_code) || '',\n      code_acces: premiereValeur(choisie.Code_Acces) || '',\n      heure_checkin: premiereValeur(choisie.checkin) || '',\n      heure_checkout: premiereValeur(choisie.checkout) || '',\n      parking: premiereValeur(choisie.parking) || '',\n      consignes_arrivee: premiereValeur(choisie.Consignes_Arrivee) || '',\n      consignes_depart: premiereValeur(choisie.regle) || '',\n      numero_proprietaire: numeroProprietaireLogement\n    };\n  }\n\n  const numeroProprietaireFinal = reservation ? reservation.numero_proprietaire : NUMERO_CONTACT_GENERAL;\n\n  // Lien d'affiliation GetYourGuide, construit à partir de la ville du\n  // logement déjà résolue dans `reservation`. Vide si aucune réservation\n  // ou aucune ville renseignée dans Airtable.\n  const PARTNER_ID_GETYOURGUIDE = 'BCNQE2V';\n  let lienActivites = '';\n  if (reservation && reservation.ville) {\n    const villeEncodee = encodeURIComponent(reservation.ville);\n    lienActivites = `https://www.getyourguide.fr/s/?q=${villeEncodee}&partner_id=${PARTNER_ID_GETYOURGUIDE}&cmp=share_to_earn`;\n  }\n\n  let contexteReservation;\n  if (reservation) {\n    contexteReservation = [\n      `- Conciergerie : ${reservation.conciergerie}`,\n      `- Logement : ${reservation.logement}`,\n      `- Adresse : ${reservation.adresse}`,\n      `- Ville : ${reservation.ville}`,\n      `- Parking : ${reservation.parking}`,\n      `- Téléphone voyageur : ${reservation.telephone_voyageur}`,\n      `- Dates du séjour : du ${reservation.date_arrivee} au ${reservation.date_depart}`,\n      `- Heure de check-in : ${reservation.heure_checkin}`,\n      `- Heure de check-out : ${reservation.heure_checkout}`,\n      `- Wi-Fi : réseau \"${reservation.wifi_nom}\" / mot de passe \"${reservation.wifi_mdp}\"`,\n      `- Code d'accès : ${reservation.code_acces}`,\n      `- Code de conversation : ${reservation.code_conv}`,\n      `- Consignes arrivée : ${reservation.consignes_arrivee}`,\n      `- Consignes départ (règles) : ${reservation.consignes_depart}`,\n      lienActivites ? `- Lien activités locales (à proposer si pertinent) : ${lienActivites}` : ''\n    ].filter(Boolean).join('\\n');\n  } else {\n    contexteReservation = '- Aucune réservation trouvée pour ce numéro : tu ne connais ni logement ni conciergerie.';\n  }\n\n  const ownerAlertPrefix = reservation\n    ? `Conciergerie : ${reservation.conciergerie}\\nLogement : ${reservation.logement}`\n    : 'Conciergerie : Inconnue\\nLogement : Inconnu';\n\n  return [{\n    json: {\n      telephone,\n      message_texte,\n      maintenant,\n      statut,\n      reservation,\n      numero_proprietaire: numeroProprietaireFinal,\n      contexte_reservation: contexteReservation,\n      owner_alert_prefix: ownerAlertPrefix,\n      lien_activites: lienActivites\n    }\n  }];\n} catch (err) {\n  return [{\n    json: {\n      erreur: true,\n      message_erreur: err.message,\n      stack: err.stack\n    }\n  }];\n}"
       },
-      "id": "a7a0218e-2135-4937-a9bd-19d4ba7ba0fa",
+      "id": "0a723738-3ee6-4277-9968-76a162b53e3d",
       "name": "Déterminer statut1",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1168,
-        704
+        640,
+        1088
       ]
     },
     {
@@ -103,13 +103,13 @@
         "sessionKey": "={{ $json.telephone }}_{{ $json.reservation?.date_arrivee || 'sans_resa' }}\n",
         "contextWindowLength": 6
       },
-      "id": "646e2b0f-8126-4ac3-91ba-f4f2a2e024a9",
+      "id": "f91a9543-8d7b-4d0a-a287-251f02cf0b46",
       "name": "Mémoire conversation (par numéro)1",
       "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
       "typeVersion": 1.3,
       "position": [
-        1568,
-        976
+        1040,
+        1360
       ]
     },
     {
@@ -120,13 +120,13 @@
         "textBody": "={{ $json.output }}",
         "additionalFields": {}
       },
-      "id": "976236dc-db35-4337-99b2-8e011ff06482",
+      "id": "67089077-22e4-4cb0-aa91-7c5da6ae54b2",
       "name": "Envoyer réponse voyageur1",
       "type": "n8n-nodes-base.whatsApp",
       "typeVersion": 1,
       "position": [
-        2112,
-        704
+        1584,
+        1088
       ],
       "webhookId": "02fd686d-1725-4423-b06e-a7c5533b4abe",
       "credentials": {
@@ -156,13 +156,13 @@
           ]
         }
       },
-      "id": "54a6c03a-2f83-4598-9c7b-a8f6462ef83e",
+      "id": "e2e3bcfc-dc33-4fe9-b820-15e5031bd6d7",
       "name": "Tool_notify_owner1",
       "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
       "typeVersion": 1.1,
       "position": [
-        2048,
-        928
+        1520,
+        1312
       ],
       "credentials": {
         "httpHeaderAuth": {
@@ -206,13 +206,13 @@
           ]
         }
       },
-      "id": "96c1b159-568e-4009-9d66-346d85f42c36",
+      "id": "8c995f53-15ae-4e66-83d8-9ce7ab1cc02e",
       "name": "Tool_send_location1",
       "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
       "typeVersion": 1.1,
       "position": [
-        1808,
-        1088
+        1280,
+        1472
       ],
       "credentials": {
         "httpHeaderAuth": {
@@ -241,13 +241,13 @@
           ]
         }
       },
-      "id": "2578696b-eb77-46ed-bb3d-cc535df6a390",
+      "id": "2fa3fae0-99a1-4d2e-8dc9-b98e58063ad7",
       "name": "get_local_details1",
       "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
       "typeVersion": 1.1,
       "position": [
-        2224,
-        896
+        1696,
+        1280
       ],
       "credentials": {
         "httpHeaderAuth": {
@@ -264,13 +264,13 @@
           "systemMessage": "=Tu es le concierge IA multi-conciergeries. Tu communiques via WhatsApp avec les voyageurs de plusieurs logements gérés par différentes conciergeries. Le numéro WhatsApp affiché est le même pour tous (0624099289), mais chaque voyageur est rattaché à UN SEUL logement précis : ne mélange jamais les informations d'un autre logement.\n\nDONNÉES DE LA CONVERSATION ACTUELLE :\n- Téléphone voyageur : {{ $('Déterminer statut1').first().json.telephone }}\n- Date/heure actuelle : {{ $('Déterminer statut1').first().json.maintenant }}\n- Statut du voyageur : {{ $('Déterminer statut1').first().json.statut }}\n- Numéro du propriétaire/conciergerie : {{ $('Déterminer statut1').first().json.numero_proprietaire }}\n\nINFORMATIONS DE LA RÉSERVATION (si déjà identifiée) :\n- Lien activités locales : {{ $('Déterminer statut1').first().json.lien_activites }}\n- Nom du voyageur : {{ $('Déterminer statut1').first().json.reservation.nom_voyageur }}\n- Logement : {{ $('Déterminer statut1').first().json.reservation.logement }}\n- Conciergerie : {{ $('Déterminer statut1').first().json.reservation.conciergerie }}\n- Adresse : {{ $('Déterminer statut1').first().json.reservation.adresse }}\n- Ville : {{ $('Déterminer statut1').first().json.reservation.ville }}\n- Parking : {{ $('Déterminer statut1').first().json.reservation.parking }}\n- Dates du séjour : du {{ $('Déterminer statut1').first().json.reservation.date_arrivee }} au {{ $('Déterminer statut1').first().json.reservation.date_depart }}\n- Heure de check-in : {{ $('Déterminer statut1').first().json.reservation.heure_checkin }}\n- Heure de check-out : {{ $('Déterminer statut1').first().json.reservation.heure_checkout }}\n- Wi-Fi : réseau \"{{ $('Déterminer statut1').first().json.reservation.wifi_nom }}\" / mot de passe \"{{ $('Déterminer statut1').first().json.reservation.wifi_mdp }}\"\n- Code d'accès : {{ $('Déterminer statut1').first().json.reservation.code_acces }}\n- Consignes arrivée : {{ $('Déterminer statut1').first().json.reservation.consignes_arrivee }}\n- Consignes départ (règles) : {{ $('Déterminer statut1').first().json.reservation.consignes_depart }}\nRECOMMANDATIONS D'ACTIVITÉS LOCALES :\nSi le voyageur demande des idées de sorties, d'activités touristiques, de \nvisites ou de choses à faire dans la région, utilise l'outil \n`get_local_details` pour les recommandations de proximité (restaurants, \nlieux). En complément, si un \"Lien activités locales\" est renseigné \nci-dessus, propose-le naturellement à la fin de ta réponse pour que le \nvoyageur puisse réserver des activités en ligne — par exemple : \"Vous \npouvez aussi trouver et réserver des activités dans la région ici : [lien]\". \nNe mentionne jamais ce lien si le voyageur ne pose pas ce type de question, \net ne le répète pas plusieurs fois dans la même conversation.\n\nPROCÉDURE D'IDENTIFICATION ET SAUVEGARDE (À SUIVRE STRICTEMENT, SI LE STATUT EST INCONNU) :\n\nSi le statut du voyageur est INCONNU, cela signifie qu'aucune réservation n'est encore rattachée à son numéro. Les informations de réservation ci-dessus sont alors vides — ignore-les complètement et suis cette procédure :\n\n1. Demande poliment au voyageur son code de conversation personnel (`code_conv`), sans jamais l'inventer ni le déduire : il doit provenir exclusivement du message que le voyageur vient de t'envoyer.\n\n2. DÈS QUE LE VOYAGEUR FOURNIT UN CODE (ex: \"NANYOKIGROS\") :\n   - Extrais uniquement le code lui-même, sans espace ni saut de ligne avant ou après (ex: si le voyageur écrit \"mon code est LT01\", tu dois utiliser exactement \"LT01\", rien d'autre).\n   - ÉTAPE A : Appelle l'outil `search_reservation` avec ce `code_conv` exact (nettoyé, sans espace ni retour à la ligne) pour retrouver et vérifier la réservation correspondante.\n   - ÉTAPE B : Si la réservation est trouvée, appelle immédiatement l'outil `sauvegarder_telephone_voyageur` avec EXACTEMENT ces deux paramètres, ni plus ni moins :\n     - `code_conv` : le même code exact utilisé à l'étape A (le code tapé par le voyageur, nettoyé, jamais une valeur du contexte).\n     - `telephone` : {{ $('Déterminer statut1').first().json.telephone }}.\n   - N'inclus JAMAIS de paramètre `cle_unique`, `Cle_Unique` ou toute autre donnée dans cet appel d'outil : seuls `code_conv` et `telephone` doivent être transmis.\n   - Si le code ne correspond à aucune réservation, informe poliment le voyageur que le code n'est pas reconnu et invite-le à le revérifier ou à contacter le propriétaire.\n   - NE RÉPONDS PAS avec les détails du logement tant que ces deux actions d'outils n'ont pas été exécutées avec succès pour la même réservation.\n\nRÈGLES PAR STATUT :\n- EN_COURS : aide complète sur CE logement précis.\n- PROCHAIN : infos de pré-arrivée uniquement (adresse, horaire). JAMAIS de codes d'accès, JAMAIS de Wi-Fi. En cas d'insistance, redirige poliment vers le propriétaire.\n- PASSE / INCONNU : réponse brève, invite à contacter le propriétaire ou demande le `code_conv`.\n\nRÈGLE CRITIQUE SUR LA LOCALISATION :\nUtilise uniquement les informations de logement fournies dans le contexte ci-dessus. Ne te base jamais sur des informations de villes ou d'adresses mentionnées dans l'historique de la conversation.\n\nPÉRIMÈTRE STRICT :\nTu es un concierge dédié exclusivement au séjour du voyageur dans le logement réservé. Tu réponds uniquement aux sujets suivants : informations sur le logement, consignes de séjour, recommandations locales et questions pratiques liées directement au séjour.\nPour toute demande hors de ce périmètre, réponds poliment :\n\"Je suis là pour vous accompagner pendant votre séjour au {{ $('Déterminer statut1').first().json.reservation.logement }} — pour ce type de demande, je vous invite à utiliser un moteur de recherche ou une app dédiée. Puis-je vous aider avec autre chose concernant votre séjour ?\"\n\nLANGUE ET TON :\nDétecte la langue du voyageur et réponds dans cette même langue. Ton professionnel, chaleureux et concis.\n\nESCALADE VERS LE PROPRIÉTAIRE :\nSi tu ne peux pas répondre à une question technique ou urgente, donne le numéro : {{ $('Déterminer statut1').first().json.numero_proprietaire }}.\n\nOUTILS DISPONIBLES :\n1. search_reservation : recherche une réservation dans Airtable à partir du paramètre `code_conv` fourni par le voyageur dans son message.\n2. sauvegarder_telephone_voyageur : met à jour la ligne Airtable correspondante au `code_conv` exact pour y inscrire le numéro du voyageur via le paramètre `telephone`. N'accepte que ces deux paramètres.\n3. get_local_details : recommandations restaurants/activités près du logement.\n4. send_location : envoie une localisation WhatsApp au voyageur.\n5. notify_owner : déclenche IMMÉDIATEMENT pour les urgences réelles (enfermé dehors, fuite d'eau, panne électrique)."
         }
       },
-      "id": "f2a9c1bb-4980-4284-8a77-a75277a48edd",
+      "id": "deb73a09-db30-4990-b09e-38ef645f2d2f",
       "name": "Agent gemini",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 1.9,
       "position": [
-        1648,
-        736
+        1120,
+        1120
       ]
     },
     {
@@ -301,10 +301,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        384,
-        720
+        -144,
+        1104
       ],
-      "id": "5099bc80-a82a-40ec-bb11-1808332ce091",
+      "id": "d439db4d-ae9a-4fd0-9059-fcf04aac9a20",
       "name": "If"
     },
     {
@@ -331,10 +331,10 @@
       "type": "n8n-nodes-base.airtable",
       "typeVersion": 2.2,
       "position": [
-        560,
-        704
+        32,
+        1088
       ],
-      "id": "f263e70d-8144-4377-96e1-8fa8c27d15b4",
+      "id": "5047a20d-077e-40da-8235-5be32a9c19eb",
       "name": "Search records",
       "alwaysOutputData": true,
       "credentials": {
@@ -355,10 +355,10 @@
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.3,
       "position": [
-        1328,
-        288
+        800,
+        672
       ],
-      "id": "72c1660a-072b-4a1f-8d0a-6fba6d3e5820",
+      "id": "963e058d-2bf7-440f-96c0-1457e4cd2383",
       "name": "Schedule Trigger"
     },
     {
@@ -369,10 +369,10 @@
       "type": "n8n-nodes-base.splitInBatches",
       "typeVersion": 3,
       "position": [
-        1728,
-        256
+        1200,
+        640
       ],
-      "id": "df527ab7-b5f4-4460-a6e4-e7e9aabe347d",
+      "id": "a8050e70-54df-47a3-a152-95c2c46da007",
       "name": "Loop Over Items"
     },
     {
@@ -383,10 +383,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
       "position": [
-        2160,
-        240
+        1632,
+        624
       ],
-      "id": "4f467f65-19d2-4f79-9a25-d8227ff08300",
+      "id": "bb183001-4b55-4f40-b167-53cf3b196be2",
       "name": "HTTP Request1"
     },
     {
@@ -396,10 +396,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2304,
-        240
+        1776,
+        624
       ],
-      "id": "b49ab221-e4ff-4e9a-9291-f5c65be36690",
+      "id": "2bb761c9-1d91-48af-ba4a-cadec3033dc0",
       "name": "Code in JavaScript2"
     },
     {
@@ -425,10 +425,10 @@
       "type": "n8n-nodes-base.airtable",
       "typeVersion": 2.2,
       "position": [
-        1504,
-        336
+        976,
+        720
       ],
-      "id": "7da049f1-7605-44b1-9cba-acb157112762",
+      "id": "c892f05b-f4e6-4b56-a4ce-78d2ecc7192e",
       "name": "Search records2",
       "credentials": {
         "airtableOAuth2Api": {
@@ -466,10 +466,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        1952,
-        208
+        1424,
+        592
       ],
-      "id": "1a533f17-2a14-4fd8-a387-4441381810e4",
+      "id": "d16529f0-481d-4d6c-8242-1f9e2619e591",
       "name": "If3"
     },
     {
@@ -776,10 +776,10 @@
       "type": "n8n-nodes-base.airtable",
       "typeVersion": 2.2,
       "position": [
-        2400,
-        480
+        1872,
+        864
       ],
-      "id": "a16c8930-4c88-4d4f-b5f6-e20e3814ee52",
+      "id": "eba27d43-2ee4-47a1-b90f-e3474d3ec707",
       "name": "Create or update a record1",
       "credentials": {
         "airtableOAuth2Api": {
@@ -812,13 +812,13 @@
           "property": []
         }
       },
-      "id": "9c11f47b-d082-4e12-888b-ed2d7d190fff",
+      "id": "ed5f73d5-4d30-4c66-9c95-9a4d1158bdd5",
       "name": "Chercher réservation1",
       "type": "n8n-nodes-base.airtable",
       "typeVersion": 2.1,
       "position": [
-        928,
-        704
+        400,
+        1088
       ],
       "alwaysOutputData": true,
       "credentials": {
@@ -854,10 +854,10 @@
       "type": "n8n-nodes-base.airtableTool",
       "typeVersion": 2.2,
       "position": [
-        1984,
-        1088
+        1456,
+        1472
       ],
-      "id": "bcd20688-db48-4a76-9db9-4acb15431692",
+      "id": "219bb27d-90be-449e-992b-140131bbc76a",
       "name": "search_reservation",
       "notesInFlow": true,
       "credentials": {
@@ -876,10 +876,10 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
       "typeVersion": 1,
       "position": [
-        1456,
-        880
+        928,
+        1264
       ],
-      "id": "ba0bc94d-9818-4f79-a002-7e1709f0f210",
+      "id": "d68799b9-020e-41f6-8610-bd3dc9065a41",
       "name": "OpenRouter Chat Model1",
       "credentials": {
         "openRouterApi": {
@@ -1199,10 +1199,10 @@
       "type": "n8n-nodes-base.airtableTool",
       "typeVersion": 2.2,
       "position": [
-        1696,
-        1056
+        1168,
+        1440
       ],
-      "id": "b3ef0f8e-ff5c-42cc-b298-69c9c362e6df",
+      "id": "6325c22b-6955-4d56-a993-5cc96f9c7fa7",
       "name": "sauvegarder_telephone_voyageur",
       "credentials": {
         "airtableOAuth2Api": {
@@ -1217,13 +1217,13 @@
         "responseMode": "responseNode",
         "options": {}
       },
-      "id": "2d0948eb-895c-4d5c-8d32-18378d854273",
+      "id": "f45ae6c8-af14-4df6-87fe-c4760a703a6c",
       "name": "Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        -96,
-        1264
+        -624,
+        1648
       ],
       "webhookId": "e7133dc7-927e-44c8-8f71-a547631cef1b"
     },
@@ -1250,13 +1250,13 @@
         "limit": 1,
         "options": {}
       },
-      "id": "7459e45c-c042-4894-9e5d-d9d219314f86",
+      "id": "244a29c0-e34e-4850-aa1e-165f0c65f8c2",
       "name": "Airtable Search",
       "type": "n8n-nodes-base.airtable",
       "typeVersion": 2.2,
       "position": [
-        128,
-        1264
+        -400,
+        1648
       ],
       "credentials": {
         "airtableOAuth2Api": {
@@ -1269,13 +1269,13 @@
       "parameters": {
         "jsCode": "// Récupère les données du logement depuis Airtable\nconst data = $input.first().json.fields;\n\n// Template HTML du livret d'accueil\nlet html = `<!DOCTYPE html>\n<html lang=\"fr\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n<title>{{nom_logement}} — Guide d'accueil</title>\n<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">\n<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin>\n<link href=\"https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap\" rel=\"stylesheet\">\n<style>\n  :root{\n    --nuit-950:#0B1220;\n    --nuit-900:#0F1830;\n    --nuit-800:#141F3B;\n    --nuit-700:#1C2A4D;\n    --lanterne-500:#E8A33D;\n    --lanterne-400:#F0B75E;\n    --sapin-500:#3D8361;\n    --sapin-400:#57A67D;\n    --neige-50:#F6F3EC;\n    --neige-100:#EEE9DD;\n    --brume-400:#8A94A6;\n    --brume-600:#5C6478;\n    --display:'Fraunces',serif;\n    --body:'IBM Plex Sans',-apple-system,sans-serif;\n    --mono:'IBM Plex Mono',monospace;\n  }\n  *{margin:0;padding:0;box-sizing:border-box;}\n  body{\n    background:var(--nuit-950);\n    color:var(--neige-50);\n    font-family:var(--body);\n    line-height:1.5;\n    -webkit-font-smoothing:antialiased;\n    padding-bottom:60px;\n  }\n  a{color:inherit;}\n  .wrap{max-width:560px;margin:0 auto;padding:0 20px;}\n\n  /* Cover */\n  .cover{\n    position:relative;\n    height:240px;\n    background-image:\n      linear-gradient(180deg, rgba(11,18,32,0) 40%, rgba(11,18,32,1) 100%),\n      url('{{photo_url}}');\n    background-size:cover;\n    background-position:center;\n  }\n  .cover-inner{\n    position:absolute;bottom:0;left:0;right:0;\n    padding:0 20px 20px;\n    max-width:560px;margin:0 auto;\n  }\n  .cover-eyebrow{\n    font-family:var(--mono);\n    font-size:11.5px;\n    letter-spacing:.1em;\n    text-transform:uppercase;\n    color:var(--lanterne-400);\n  }\n  .cover h1{\n    font-family:var(--display);\n    font-weight:700;\n    font-size:28px;\n    margin-top:6px;\n    color:var(--neige-50);\n  }\n  .cover-addr{\n    font-size:13.5px;\n    color:var(--brume-400);\n    margin-top:4px;\n  }\n\n  /* Check in/out strip */\n  .stay-strip{\n    display:flex;\n    margin-top:18px;\n    border:1px solid rgba(246,243,236,.1);\n    border-radius:8px;\n    overflow:hidden;\n  }\n  .stay-cell{\n    flex:1;\n    padding:14px 16px;\n    text-align:center;\n  }\n  .stay-cell + .stay-cell{border-left:1px solid rgba(246,243,236,.1);}\n  .stay-label{\n    font-family:var(--mono);\n    font-size:10.5px;\n    text-transform:uppercase;\n    letter-spacing:.08em;\n    color:var(--brume-400);\n  }\n  .stay-value{\n    font-family:var(--display);\n    font-size:20px;\n    margin-top:4px;\n    color:var(--lanterne-400);\n  }\n\n  /* Sections */\n  section{margin-top:30px;}\n  .sec-title{\n    font-family:var(--body);\n    font-weight:600;\n    font-size:14px;\n    letter-spacing:.02em;\n    color:var(--neige-50);\n    display:flex;\n    align-items:center;\n    gap:9px;\n    margin-bottom:12px;\n  }\n  .sec-title .dot{\n    width:6px;height:6px;\n    border-radius:50%;\n    background:var(--sapin-400);\n  }\n\n  .info-card{\n    background:var(--nuit-900);\n    border:1px solid rgba(246,243,236,.1);\n    border-radius:8px;\n    padding:16px 18px;\n  }\n  .info-row{\n    display:flex;\n    justify-content:space-between;\n    align-items:center;\n    padding:10px 0;\n  }\n  .info-row + .info-row{border-top:1px solid rgba(246,243,236,.07);}\n  .info-row-label{\n    font-size:13.5px;\n    color:var(--brume-400);\n  }\n  .info-row-value{\n    font-family:var(--mono);\n    font-size:14px;\n    color:var(--neige-50);\n    background:rgba(246,243,236,.06);\n    padding:3px 9px;\n    border-radius:4px;\n  }\n\n  .text-block{\n    background:var(--nuit-900);\n    border:1px solid rgba(246,243,236,.1);\n    border-radius:8px;\n    padding:18px 20px;\n    font-size:14px;\n    color:var(--neige-100);\n    line-height:1.65;\n    white-space:pre-line;\n  }\n\n  .reco-item{\n    display:flex;\n    justify-content:space-between;\n    align-items:center;\n    gap:12px;\n    padding:14px 0;\n  }\n  .reco-item + .reco-item{border-top:1px solid rgba(246,243,236,.07);}\n  .reco-name{font-size:14px;color:var(--neige-50);}\n  .reco-desc{font-size:12.5px;color:var(--brume-400);margin-top:2px;}\n  .reco-link{\n    font-family:var(--mono);\n    font-size:12px;\n    color:var(--sapin-400);\n    flex-shrink:0;\n    border:1px solid rgba(87,166,125,.35);\n    padding:6px 10px;\n    border-radius:5px;\n  }\n\n  /* Ask LÉO CTA */\n  .leo-cta{\n    margin-top:34px;\n    background:linear-gradient(135deg, rgba(232,163,61,.12), rgba(61,131,97,.12));\n    border:1px solid rgba(232,163,61,.3);\n    border-radius:10px;\n    padding:20px;\n    text-align:center;\n  }\n  .leo-cta h3{\n    font-family:var(--display);\n    font-size:19px;\n    color:var(--neige-50);\n    margin-bottom:6px;\n  }\n  .leo-cta p{\n    font-size:13px;\n    color:var(--brume-400);\n    margin-bottom:14px;\n  }\n  .leo-btn{\n    display:inline-block;\n    font-family:var(--mono);\n    font-size:13.5px;\n    background:var(--sapin-500);\n    color:var(--neige-50);\n    padding:12px 22px;\n    border-radius:6px;\n    text-decoration:none;\n  }\n\n  footer{\n    text-align:center;\n    margin-top:40px;\n    font-family:var(--mono);\n    font-size:11px;\n    color:var(--brume-600);\n  }\n</style>\n</head>\n<body>\n\n<div class=\"cover\">\n  <div class=\"cover-inner\">\n    <span class=\"cover-eyebrow\">Guide d'accueil</span>\n    <h1>{{nom_logement}}</h1>\n    <p class=\"cover-addr\">{{adresse}}</p>\n  </div>\n</div>\n\n<div class=\"wrap\">\n\n  <div class=\"stay-strip\">\n    <div class=\"stay-cell\">\n      <div class=\"stay-label\">Arrivée</div>\n      <div class=\"stay-value\">{{checkin_heure}}</div>\n    </div>\n    <div class=\"stay-cell\">\n      <div class=\"stay-label\">Départ</div>\n      <div class=\"stay-value\">{{checkout_heure}}</div>\n    </div>\n  </div>\n\n  <section>\n    <div class=\"sec-title\"><span class=\"dot\"></span>Accès & Wi-Fi</div>\n    <div class=\"info-card\">\n      <div class=\"info-row\">\n        <span class=\"info-row-label\">Code d'accès</span>\n        <span class=\"info-row-value\">{{code_acces}}</span>\n      </div>\n      <div class=\"info-row\">\n        <span class=\"info-row-label\">Réseau Wi-Fi</span>\n        <span class=\"info-row-value\">{{wifi_nom}}</span>\n      </div>\n      <div class=\"info-row\">\n        <span class=\"info-row-label\">Mot de passe</span>\n        <span class=\"info-row-value\">{{wifi_code}}</span>\n      </div>\n    </div>\n  </section>\n\n  <section>\n    <div class=\"sec-title\"><span class=\"dot\"></span>Stationnement</div>\n    <div class=\"text-block\">{{parking_info}}</div>\n  </section>\n\n  <section>\n    <div class=\"sec-title\"><span class=\"dot\"></span>Équipements</div>\n    <div class=\"text-block\">{{equipements}}</div>\n  </section>\n\n  <section>\n    <div class=\"sec-title\"><span class=\"dot\"></span>Règles de la maison</div>\n    <div class=\"text-block\">{{regles_maison}}</div>\n  </section>\n\n  <section>\n    <div class=\"sec-title\"><span class=\"dot\"></span>À proximité</div>\n    <div class=\"info-card\">\n      <!-- Répéter ce bloc reco-item pour chaque recommandation, ou générer dynamiquement côté n8n -->\n      <div class=\"reco-item\">\n        <div>\n          <div class=\"reco-name\">{{reco_1_nom}}</div>\n          <div class=\"reco-desc\">{{reco_1_desc}}</div>\n        </div>\n        <a class=\"reco-link\" href=\"{{reco_1_gmaps_url}}\" target=\"_blank\" rel=\"noopener\">Itinéraire</a>\n      </div>\n      <div class=\"reco-item\">\n        <div>\n          <div class=\"reco-name\">{{reco_2_nom}}</div>\n          <div class=\"reco-desc\">{{reco_2_desc}}</div>\n        </div>\n        <a class=\"reco-link\" href=\"{{reco_2_gmaps_url}}\" target=\"_blank\" rel=\"noopener\">Itinéraire</a>\n      </div>\n      <div class=\"reco-item\">\n        <div>\n          <div class=\"reco-name\">{{reco_3_nom}}</div>\n          <div class=\"reco-desc\">{{reco_3_desc}}</div>\n        </div>\n        <a class=\"reco-link\" href=\"{{reco_3_gmaps_url}}\" target=\"_blank\" rel=\"noopener\">Itinéraire</a>\n      </div>\n    </div>\n  </section>\n\n  <div class=\"leo-cta\">\n    <h3>Une question ?</h3>\n    <p>LÉO répond sur WhatsApp, 24/7 — pour tout ce qui n'est pas déjà dans ce guide.</p>\n    <a class=\"leo-btn\" href=\"https://wa.me/{{numero_whatsapp}}\" target=\"_blank\" rel=\"noopener\">Écrire sur WhatsApp</a>\n  </div>\n\n  <footer>Guide généré pour {{nom_logement}} · en cas d'urgence : {{contact_urgence}}</footer>\n\n</div>\n\n</body>\n</html>\n`;\n\nconst replacements = {\n  nom_logement: data.Name || data.nom_logement || '',\n  adresse: data.adresse || '',\n  photo_url: data.photo_url || '',\n  checkin_heure: data.checkin || data.checkin_heure || '',\n  checkout_heure: data.checkout || data.checkout_heure || '',\n  code_acces: data.Code_Acces || data.code_acces || '',\n  wifi_nom: data.wifi_nom || '',\n  wifi_code: data.wifi_code || '',\n  parking_info: data.parking || data.parking_info || '',\n  equipements: data.equipements || '',\n  regles_maison: data.regle || data.regles_maison || '',\n  contact_urgence: data.contact || data.contact_urgence || '',\n  numero_whatsapp: \"33624099289\",\n  reco_1_nom: '', reco_1_desc: '', reco_1_gmaps_url: '#',\n  reco_2_nom: '', reco_2_desc: '', reco_2_gmaps_url: '#',\n  reco_3_nom: '', reco_3_desc: '', reco_3_gmaps_url: '#'\n};\n\nfor (const [key, value] of Object.entries(replacements)) {\n  html = html.split(`{{${key}}}`).join(value || '');\n}\n\nreturn [{ json: { html } }];"
       },
-      "id": "4cda6f1b-99cb-4abb-bca7-06a9e767e90c",
+      "id": "a2ac139f-08f0-42d5-ab16-24a76f0efca2",
       "name": "Générer HTML guide",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        352,
-        1264
+        -176,
+        1648
       ]
     },
     {
@@ -1293,13 +1293,13 @@
           }
         }
       },
-      "id": "e49aa424-48b7-4e29-bdd2-607464bfde8c",
+      "id": "cf3bd7fa-bb0d-4718-80bb-257f4acaffec",
       "name": "Respond to Webhook",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        576,
-        1264
+        48,
+        1648
       ]
     },
     {
@@ -1733,10 +1733,10 @@
       "type": "n8n-nodes-base.airtable",
       "typeVersion": 2.2,
       "position": [
-        736,
-        1440
+        208,
+        1824
       ],
-      "id": "730fd5e3-a508-4dc5-b067-2505f568ddab",
+      "id": "5bb5ccbb-06a9-4ce5-8ad6-f070bb6c865f",
       "name": "Create a record",
       "credentials": {
         "airtableOAuth2Api": {
@@ -1756,10 +1756,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        752,
-        1664
+        224,
+        2048
       ],
-      "id": "647d3daa-c9cc-47e7-b233-883137deb562",
+      "id": "c009b486-b63f-45c7-811f-d970d36506e7",
       "name": "Respond to Webhook2"
     },
     {
@@ -1790,10 +1790,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        256,
-        1008
+        -272,
+        1392
       ],
-      "id": "437f9ed3-d1a8-4c6c-bf40-47050a6031ac",
+      "id": "7f7b5179-0380-47f1-9de9-6634aaecbc55",
       "name": "If1"
     },
     {
@@ -1805,10 +1805,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        944,
-        928
+        416,
+        1312
       ],
-      "id": "c7f4b02e-2677-4457-bf85-8b0524e57cb6",
+      "id": "87af436e-efde-493d-b10a-a442f4f17fc7",
       "name": "Respond to Webhook3"
     },
     {
@@ -1822,10 +1822,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        480,
-        1104
+        -48,
+        1488
       ],
-      "id": "4ea80a0c-c8c8-46a7-bb6d-e8c722366dab",
+      "id": "9420a005-56c9-492b-addc-1e2926ede960",
       "name": "Respond to Webhook4"
     },
     {
@@ -1837,10 +1837,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        960,
-        1440
+        432,
+        1824
       ],
-      "id": "34eee12f-cf19-4ec9-8820-e6d229d21fa5",
+      "id": "02fe6473-1c60-4f3b-8827-503cfb2a9055",
       "name": "Respond to Webhook1"
     },
     {
@@ -1866,10 +1866,10 @@
       "type": "n8n-nodes-base.airtable",
       "typeVersion": 2.2,
       "position": [
-        704,
-        912
+        176,
+        1296
       ],
-      "id": "2af7dc94-b2aa-49c6-9eb9-c49f39dba03c",
+      "id": "0a7659ed-9308-4c35-aa91-099edaba79a2",
       "name": "Delete a record",
       "credentials": {
         "airtableOAuth2Api": {
@@ -1906,10 +1906,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        512,
-        1536
+        -16,
+        1920
       ],
-      "id": "5290c4f2-b793-4cf8-8b57-f7ce7195a0e3",
+      "id": "34147b42-11fb-4b97-af17-fb6d2532af0e",
       "name": "If2"
     },
     {
@@ -1936,10 +1936,10 @@
       "type": "n8n-nodes-base.airtable",
       "typeVersion": 2.2,
       "position": [
-        480,
-        912
+        -48,
+        1296
       ],
-      "id": "043269d2-9b08-47fa-a257-da173e37143b",
+      "id": "7242aa2b-7b55-4cc1-bb47-82c1000e7ec0",
       "name": "Search records1",
       "credentials": {
         "airtableOAuth2Api": {
@@ -1958,10 +1958,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        288,
-        1536
+        -240,
+        1920
       ],
-      "id": "d4d70eee-3a1d-40ce-be45-1a9f34a5f10a",
+      "id": "f0aeb08f-355d-4486-a636-78642e3c3fa7",
       "name": "create",
       "webhookId": "4670d3df-67f9-4f0a-9de9-061bd65c6d5d"
     },
@@ -1975,202 +1975,12 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        32,
-        1008
+        -496,
+        1392
       ],
-      "id": "b8601355-16a6-4f3d-966c-d54647db51a3",
+      "id": "de480874-ed13-42c3-8afe-7f49cdad5b45",
       "name": "delete",
       "webhookId": "4670d3df-67f9-4f0a-9de9-061bd65c6d5d"
-    },
-    {
-      "parameters": {
-        "httpMethod": "POST",
-        "path": "update-property-name",
-        "responseMode": "responseNode",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.webhook",
-      "typeVersion": 2.1,
-      "position": [
-        32,
-        1264
-      ],
-      "id": "f4b1c3d5-6e78-4a9b-8c1d-2e3f4a5b6c7d",
-      "name": "update-property-name",
-      "webhookId": "f4b1c3d5-6e78-4a9b-8c1d-2e3f4a5b6c7d"
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 3
-          },
-          "conditions": [
-            {
-              "id": "9b2e1a4c-3d5f-4a6b-8c7d-1e2f3a4b5c6d",
-              "leftValue": "={{ $json.headers['x-webhook-secret'] }}",
-              "rightValue": "yga7K9mP2xQzR4vL8nJ6wTcF3hB5sD1e",
-              "operator": {
-                "type": "string",
-                "operation": "equals",
-                "name": "filter.operator.equals"
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.3,
-      "position": [
-        256,
-        1264
-      ],
-      "id": "a1b2c3d4-5e6f-4a7b-8c9d-0e1f2a3b4c5d",
-      "name": "If - update-property-name"
-    },
-    {
-      "parameters": {
-        "authentication": "airtableOAuth2Api",
-        "operation": "search",
-        "base": {
-          "__rl": true,
-          "value": "appU4bRp75gisWKzx",
-          "mode": "list",
-          "cachedResultName": "Conciergerie Logements",
-          "cachedResultUrl": "https://airtable.com/appU4bRp75gisWKzx"
-        },
-        "table": {
-          "__rl": true,
-          "value": "tblQQfqyG7vRz8b21",
-          "mode": "list",
-          "cachedResultName": "Logements",
-          "cachedResultUrl": "https://airtable.com/appU4bRp75gisWKzx/tblQQfqyG7vRz8b21"
-        },
-        "filterByFormula": "={id_logement}='{{ $json.body.id_logement }}'",
-        "returnAll": false,
-        "limit": 1,
-        "options": {}
-      },
-      "type": "n8n-nodes-base.airtable",
-      "typeVersion": 2.2,
-      "position": [
-        480,
-        1264
-      ],
-      "id": "b2c3d4e5-6f7a-4b8c-9d0e-1f2a3b4c5d6e",
-      "name": "Chercher logement (rename)",
-      "credentials": {
-        "airtableOAuth2Api": {
-          "id": "su4FBLDPLE74YfrP",
-          "name": "Airtable account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "authentication": "airtableOAuth2Api",
-        "operation": "update",
-        "base": {
-          "__rl": true,
-          "value": "appU4bRp75gisWKzx",
-          "mode": "list",
-          "cachedResultName": "Conciergerie Logements",
-          "cachedResultUrl": "https://airtable.com/appU4bRp75gisWKzx"
-        },
-        "table": {
-          "__rl": true,
-          "value": "tblQQfqyG7vRz8b21",
-          "mode": "list",
-          "cachedResultName": "Logements",
-          "cachedResultUrl": "https://airtable.com/appU4bRp75gisWKzx/tblQQfqyG7vRz8b21"
-        },
-        "columns": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "id": "={{ $('Chercher logement (rename)').item.json.id }}",
-            "Name": "={{ $('update-property-name').item.json.body.nom }}"
-          },
-          "matchingColumns": ["id"],
-          "schema": [
-            {
-              "id": "id",
-              "displayName": "id",
-              "required": false,
-              "defaultMatch": true,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "string",
-              "readOnly": false,
-              "removed": false
-            },
-            {
-              "id": "Name",
-              "displayName": "Name",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "string",
-              "readOnly": false,
-              "removed": false
-            }
-          ],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": false
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.airtable",
-      "typeVersion": 2.2,
-      "position": [
-        704,
-        1264
-      ],
-      "id": "c3d4e5f6-7a8b-4c9d-0e1f-2a3b4c5d6e7f",
-      "name": "Renommer logement (Update)",
-      "credentials": {
-        "airtableOAuth2Api": {
-          "id": "su4FBLDPLE74YfrP",
-          "name": "Airtable account"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "respondWith": "json",
-        "responseBody": "{\n  \"ok\": true\n}",
-        "options": {}
-      },
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.5,
-      "position": [
-        928,
-        1264
-      ],
-      "id": "d4e5f6a7-8b9c-4d0e-1f2a-3b4c5d6e7f8a",
-      "name": "Respond to Webhook - rename"
-    },
-    {
-      "parameters": {
-        "respondWith": "json",
-        "responseBody": "{\"error\": \"unauthorized\"}",
-        "options": {
-          "responseCode": 401
-        }
-      },
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1.5,
-      "position": [
-        256,
-        1408
-      ],
-      "id": "e5f6a7b8-9c0d-4e1f-2a3b-4c5d6e7f8a9b",
-      "name": "Respond to Webhook - rename unauthorized"
     },
     {
       "parameters": {
@@ -2182,10 +1992,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        1488,
-        496
+        960,
+        880
       ],
-      "id": "4385f9e8-c654-440a-b4eb-7a97245ec239",
+      "id": "d43686ea-dd9b-4d1d-b026-d129b626148c",
       "name": "create1",
       "webhookId": "4670d3df-67f9-4f0a-9de9-061bd65c6d5d"
     },
@@ -2213,10 +2023,10 @@
       "type": "n8n-nodes-base.airtable",
       "typeVersion": 2.2,
       "position": [
-        1680,
-        496
+        1152,
+        880
       ],
-      "id": "44c54eb3-bd13-4b52-a930-65d55811ac2f",
+      "id": "6f9bb6ef-0adf-497f-b92f-16d18c0704b8",
       "name": "Search records3",
       "credentials": {
         "airtableOAuth2Api": {
@@ -2233,10 +2043,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.5,
       "position": [
-        2016,
-        496
+        1488,
+        880
       ],
-      "id": "f8d9b64d-134b-48c0-8bfd-707cb25d0b46",
+      "id": "2cfebc51-489c-4761-8309-6b8631d5e84b",
       "name": "HTTP Request"
     },
     {
@@ -2246,10 +2056,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2192,
-        496
+        1664,
+        880
       ],
-      "id": "3c319525-ae32-46fe-8ae1-99f63d50b719",
+      "id": "37c6750b-bb46-4be6-8d3c-5df5b151d386",
       "name": "Code in JavaScript"
     },
     {
@@ -2261,10 +2071,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        2576,
-        464
+        2048,
+        848
       ],
-      "id": "42bef834-c924-479a-82c9-8c87be7fe814",
+      "id": "b14a0927-d373-4d5d-9e27-310170ba57cb",
       "name": "Respond to Webhook5"
     },
     {
@@ -2699,10 +2509,10 @@
       "type": "n8n-nodes-base.airtable",
       "typeVersion": 2.2,
       "position": [
-        1856,
-        496
+        1328,
+        880
       ],
-      "id": "01a450ad-f777-478b-88da-449e1f87fc1b",
+      "id": "0cbeddfd-d28a-437c-8113-df2944e7c47b",
       "name": "Update record",
       "credentials": {
         "airtableOAuth2Api": {
@@ -2824,10 +2634,10 @@
       "type": "n8n-nodes-base.airtable",
       "typeVersion": 2.2,
       "position": [
-        1360,
-        704
+        832,
+        1088
       ],
-      "id": "d66cc748-9d34-40ee-af47-afe7b91ffe93",
+      "id": "acaea422-ee2d-40fa-8278-69b88edb33d1",
       "name": "Create a record1",
       "credentials": {
         "airtableOAuth2Api": {
@@ -2846,10 +2656,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        560,
-        432
+        32,
+        816
       ],
-      "id": "20754bae-527f-437a-ba8a-595a9dd6a993",
+      "id": "6dd11aee-2ec9-4f55-8e2d-cae3091a17d9",
       "name": "get-message-stats",
       "webhookId": "f7970228-942b-4583-909f-9a367caa1cbc"
     },
@@ -2881,10 +2691,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        704,
-        432
+        176,
+        816
       ],
-      "id": "a154948e-871c-4376-9c8d-c8028ca18450",
+      "id": "6acd0382-e4e6-4db2-9e6f-60ffc0caac97",
       "name": "If4"
     },
     {
@@ -2910,10 +2720,10 @@
       "type": "n8n-nodes-base.airtable",
       "typeVersion": 2.2,
       "position": [
-        912,
-        416
+        384,
+        800
       ],
-      "id": "52d8f05b-4b77-49f1-ac1c-17b19e8f2dd4",
+      "id": "c831a8cf-af09-4e2d-bc9c-6a760af5be38",
       "name": "Search records4",
       "credentials": {
         "airtableOAuth2Api": {
@@ -2929,10 +2739,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1088,
-        416
+        560,
+        800
       ],
-      "id": "fb395f7e-6869-4d38-9da1-e9a4738c3531",
+      "id": "991b5780-3f37-4baa-b2cb-3f77c0d57314",
       "name": "Code in JavaScript1"
     },
     {
@@ -2942,10 +2752,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        1232,
-        416
+        704,
+        800
       ],
-      "id": "72e63a63-d835-411c-8f84-c8398c8c0c61",
+      "id": "e4a0f032-e793-4cce-b18e-4ba964d54a43",
       "name": "Respond to Webhook6"
     },
     {
@@ -2959,10 +2769,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        928,
-        576
+        400,
+        960
       ],
-      "id": "0213460c-6a48-453f-b0a7-b5cf629edde2",
+      "id": "6ddf3c7a-1292-4e46-82a9-6aac095e2654",
       "name": "Respond to Webhook7"
     },
     {
@@ -2974,10 +2784,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        1472,
-        1376
+        944,
+        1760
       ],
-      "id": "6ec7b4e5-f1a9-4cb1-9bbd-0e07fe7c11f5",
+      "id": "ef292aff-bcee-459b-bc53-c426c0e26d6a",
       "name": "get-guide",
       "webhookId": "701da936-0af4-49bf-a6d8-21df967e8f60"
     },
@@ -2991,10 +2801,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        1456,
-        1552
+        928,
+        1936
       ],
-      "id": "52541c61-c241-4d32-99da-5ecdb3a1f184",
+      "id": "e5a28899-45e4-49c0-8c1b-f5bdccebffc6",
       "name": "update guide",
       "webhookId": "546ed50d-2368-4ab3-9135-b91d5c7ec751"
     },
@@ -3022,10 +2832,10 @@
       "type": "n8n-nodes-base.airtable",
       "typeVersion": 2.2,
       "position": [
-        1696,
-        1376
+        1168,
+        1760
       ],
-      "id": "c7edf759-5309-4c63-b77a-e8455a6ca402",
+      "id": "5e86e763-e8e3-4e08-ad24-39658b809d0a",
       "name": "Search records5",
       "credentials": {
         "airtableOAuth2Api": {
@@ -3043,10 +2853,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        1920,
-        1376
+        1392,
+        1760
       ],
-      "id": "02a71be5-4ecc-45a4-99d2-d45850f0d945",
+      "id": "1089a51d-3c15-4506-ad5e-48f720d91b1a",
       "name": "Respond to Webhook8"
     },
     {
@@ -3503,10 +3313,10 @@
       "type": "n8n-nodes-base.airtable",
       "typeVersion": 2.2,
       "position": [
-        1680,
-        1552
+        1152,
+        1936
       ],
-      "id": "d25a112f-0a3a-4d1e-a354-43643e4459c6",
+      "id": "9228a3d1-2291-42ff-9149-7a3702ad49df",
       "name": "Update record1",
       "credentials": {
         "airtableOAuth2Api": {
@@ -3526,10 +3336,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        1904,
-        1552
+        1376,
+        1936
       ],
-      "id": "d1712108-f5f7-4fb1-964f-cf9b55f12ba0",
+      "id": "0e9ded28-6efc-4103-9129-e4c0e9619178",
       "name": "Respond to Webhook9"
     },
     {
@@ -3542,10 +3352,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        3120,
-        896
+        2592,
+        1280
       ],
-      "id": "d6a610c1-d9e3-4a12-a2e2-f5178e72ca85",
+      "id": "8cd34fad-a48d-4d72-822a-09ae0427df90",
       "name": "generate-conv-code",
       "webhookId": "a37f14a0-dd7d-4209-9032-e690ac7510a0"
     },
@@ -3559,10 +3369,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        3056,
-        224
+        2528,
+        608
       ],
-      "id": "fb948cf3-0564-4700-a4a5-ee9d750ac717",
+      "id": "a145d79f-49a2-44c9-ad82-7df948cee0ad",
       "name": "get-reservations",
       "webhookId": "e88b2062-8bd4-4181-8a10-8791be4b2804"
     },
@@ -3594,10 +3404,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        3232,
-        240
+        2704,
+        624
       ],
-      "id": "0627509f-2869-4709-8a20-f079a45271ca",
+      "id": "a332ad01-d66b-4850-884e-dd7390eef867",
       "name": "If5"
     },
     {
@@ -3607,10 +3417,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3392,
-        192
+        2864,
+        576
       ],
-      "id": "11e74ee1-5c85-4225-9686-9f09b575f1de",
+      "id": "32d785f1-2af1-4306-a3d2-f3533c292244",
       "name": "Build Formula"
     },
     {
@@ -3622,10 +3432,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        4128,
-        128
+        3600,
+        512
       ],
-      "id": "b3b23bb6-ab67-47ff-828e-e6028c17d862",
+      "id": "ea12176b-b9dc-4384-a17c-3eca3d7d3620",
       "name": "Respond to Webhook10"
     },
     {
@@ -3652,10 +3462,10 @@
       "type": "n8n-nodes-base.airtable",
       "typeVersion": 2.2,
       "position": [
-        3600,
-        192
+        3072,
+        576
       ],
-      "id": "e86462a1-e635-4663-9d8e-d141f3f069f8",
+      "id": "ca48e904-a666-4c10-bbac-5baedc9759d6",
       "name": "Search records6",
       "credentials": {
         "airtableOAuth2Api": {
@@ -3671,10 +3481,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3840,
-        160
+        3312,
+        544
       ],
-      "id": "0e53dd2b-15cb-4d8f-864a-1b2569f11d3e",
+      "id": "9013ff0e-e0d5-45fb-8e25-af662d460939",
       "name": "Format Response"
     },
     {
@@ -3688,10 +3498,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        3456,
-        336
+        2928,
+        720
       ],
-      "id": "713dd6b7-1a2b-48b2-877f-f14305d3b6d8",
+      "id": "16c7dbd9-154a-43fc-8a44-385deb2757ff",
       "name": "Respond to Webhook11"
     },
     {
@@ -3704,10 +3514,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        3072,
-        544
+        2544,
+        928
       ],
-      "id": "49ebe226-23f4-4dde-ab2c-a7ad989f3d61",
+      "id": "d20060f7-31ee-4227-954e-efd969c63997",
       "name": "update-reservation-name",
       "webhookId": "f7627aa5-f894-4236-8e5b-1c92e45f6ffb"
     },
@@ -3739,10 +3549,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        3296,
-        544
+        2768,
+        928
       ],
-      "id": "9aea1e20-16eb-47bf-86fc-c89de463ea7b",
+      "id": "530f5645-a22d-4921-819d-84814c79ec93",
       "name": "If6"
     },
     {
@@ -3752,10 +3562,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3568,
-        480
+        3040,
+        864
       ],
-      "id": "d5bb411b-c4c0-4ec2-8304-e4f8f5531afe",
+      "id": "e052d2ea-d3e5-4d40-8841-9699c8bfec3e",
       "name": "Build Search Formula"
     },
     {
@@ -3782,10 +3592,10 @@
       "type": "n8n-nodes-base.airtable",
       "typeVersion": 2.2,
       "position": [
-        3824,
-        480
+        3296,
+        864
       ],
-      "id": "7c0eaa09-51be-486a-9901-d495cb4d7cc1",
+      "id": "e2be24ac-a844-4a18-ad3a-3cf70a38eedb",
       "name": "Search records7",
       "credentials": {
         "airtableOAuth2Api": {
@@ -4105,10 +3915,10 @@
       "type": "n8n-nodes-base.airtable",
       "typeVersion": 2.2,
       "position": [
-        4096,
-        464
+        3568,
+        848
       ],
-      "id": "53db48ed-cb55-473c-9286-bb1b3fc3ce0f",
+      "id": "ba4b0a66-ba09-454e-b01f-790248e9b3ab",
       "name": "Update record2",
       "credentials": {
         "airtableOAuth2Api": {
@@ -4126,10 +3936,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        4352,
-        464
+        3824,
+        848
       ],
-      "id": "d27a1913-551c-45c3-818b-506a5ae4284a",
+      "id": "204c4fef-bb4e-419c-8113-fa1ead641674",
       "name": "Respond to Webhook12"
     },
     {
@@ -4143,10 +3953,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        3552,
-        640
+        3024,
+        1024
       ],
-      "id": "1573f6e3-262a-468c-8b6d-abfee044a8c8",
+      "id": "73550871-a479-4348-bce7-eaf26c17d576",
       "name": "Respond to Webhook13"
     },
     {
@@ -4156,10 +3966,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3680,
-        784
+        3152,
+        1168
       ],
-      "id": "8b53b228-1108-4c43-b818-c0a02724e836",
+      "id": "6586d231-2832-41d9-a6d9-e36115cf48eb",
       "name": "Code in JavaScript3"
     },
     {
@@ -4186,10 +3996,10 @@
       "type": "n8n-nodes-base.airtable",
       "typeVersion": 2.2,
       "position": [
-        3824,
-        784
+        3296,
+        1168
       ],
-      "id": "50cd48cd-476e-4328-adbf-dad1684240a8",
+      "id": "4b858c5e-506e-4290-9a24-3eb9a71f24a6",
       "name": "Search records8",
       "credentials": {
         "airtableOAuth2Api": {
@@ -4205,334 +4015,11 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3952,
-        784
+        3424,
+        1168
       ],
-      "id": "1064a5a7-55ec-4458-b6ef-fa11d8731462",
+      "id": "988bd04c-fe00-4459-93f4-b86f26edde50",
       "name": "Code in JavaScript4"
-    },
-    {
-      "parameters": {
-        "authentication": "airtableOAuth2Api",
-        "operation": "update",
-        "base": {
-          "__rl": true,
-          "value": "appU4bRp75gisWKzx",
-          "mode": "list",
-          "cachedResultName": "Conciergerie Logements",
-          "cachedResultUrl": "https://airtable.com/appU4bRp75gisWKzx"
-        },
-        "table": {
-          "__rl": true,
-          "value": "tblETdNW0KEn6HGac",
-          "mode": "list",
-          "cachedResultName": "Reservations",
-          "cachedResultUrl": "https://airtable.com/appU4bRp75gisWKzx/tblETdNW0KEn6HGac"
-        },
-        "columns": {
-          "mappingMode": "defineBelow",
-          "value": {
-            "id": "={{ $json.id }}",
-            "Nom_Voyageur": "={{ $('update-reservation-name').first().json.body.nom_voyageur }}"
-          },
-          "matchingColumns": [
-            "id"
-          ],
-          "schema": [
-            {
-              "id": "id",
-              "displayName": "id",
-              "required": false,
-              "defaultMatch": true,
-              "display": true,
-              "type": "string",
-              "readOnly": true,
-              "removed": false
-            },
-            {
-              "id": "Nom_Voyageur",
-              "displayName": "Nom_Voyageur",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "string",
-              "readOnly": false,
-              "removed": false
-            },
-            {
-              "id": "Cle_Unique",
-              "displayName": "Cle_Unique",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "string",
-              "readOnly": false,
-              "removed": true
-            },
-            {
-              "id": "Telephone_Voyageur",
-              "displayName": "Telephone_Voyageur",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "string",
-              "readOnly": false,
-              "removed": true
-            },
-            {
-              "id": "Date_Debut",
-              "displayName": "Date_Debut",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "dateTime",
-              "readOnly": false,
-              "removed": true
-            },
-            {
-              "id": "Date_Fin",
-              "displayName": "Date_Fin",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "dateTime",
-              "readOnly": false,
-              "removed": true
-            },
-            {
-              "id": "Nom_Conciergerie_id",
-              "displayName": "Nom_Conciergerie_id",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "array",
-              "readOnly": false,
-              "removed": true
-            },
-            {
-              "id": "Logement",
-              "displayName": "Logement",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "array",
-              "readOnly": false,
-              "removed": true
-            },
-            {
-              "id": "Name",
-              "displayName": "Name",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "string",
-              "readOnly": true,
-              "removed": true
-            },
-            {
-              "id": "ville",
-              "displayName": "ville",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "string",
-              "readOnly": true,
-              "removed": true
-            },
-            {
-              "id": "wifi_nom",
-              "displayName": "wifi_nom",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "string",
-              "readOnly": true,
-              "removed": true
-            },
-            {
-              "id": "wifi_code",
-              "displayName": "wifi_code",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "string",
-              "readOnly": true,
-              "removed": true
-            },
-            {
-              "id": "Code_Acces",
-              "displayName": "Code_Acces",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "string",
-              "readOnly": true,
-              "removed": true
-            },
-            {
-              "id": "checkin",
-              "displayName": "checkin",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "string",
-              "readOnly": true,
-              "removed": true
-            },
-            {
-              "id": "checkout",
-              "displayName": "checkout",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "string",
-              "readOnly": true,
-              "removed": true
-            },
-            {
-              "id": "adresse",
-              "displayName": "adresse",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "string",
-              "readOnly": true,
-              "removed": true
-            },
-            {
-              "id": "parking",
-              "displayName": "parking",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "string",
-              "readOnly": true,
-              "removed": true
-            },
-            {
-              "id": "regle",
-              "displayName": "regle",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "string",
-              "readOnly": true,
-              "removed": true
-            },
-            {
-              "id": "contact",
-              "displayName": "contact",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "string",
-              "readOnly": true,
-              "removed": true
-            },
-            {
-              "id": "Host Email",
-              "displayName": "Host Email",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "string",
-              "readOnly": true,
-              "removed": true
-            },
-            {
-              "id": "numero_proprietaire",
-              "displayName": "numero_proprietaire",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "string",
-              "readOnly": true,
-              "removed": true
-            },
-            {
-              "id": "Numero_Whatsapp",
-              "displayName": "Numero_Whatsapp",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "string",
-              "readOnly": true,
-              "removed": true
-            },
-            {
-              "id": "url_ical",
-              "displayName": "url_ical",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "string",
-              "readOnly": true,
-              "removed": true
-            },
-            {
-              "id": "Code_conv",
-              "displayName": "Code_conv",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "string",
-              "readOnly": false,
-              "removed": true
-            },
-            {
-              "id": "nom du logement",
-              "displayName": "nom du logement",
-              "required": false,
-              "defaultMatch": false,
-              "canBeUsedToMatch": true,
-              "display": true,
-              "type": "string",
-              "readOnly": true,
-              "removed": true
-            }
-          ],
-          "attemptToConvertTypes": false,
-          "convertFieldsToString": false
-        },
-        "options": {}
-      },
-      "type": "n8n-nodes-base.airtable",
-      "typeVersion": 2.2,
-      "position": [
-        880,
-        1632
-      ],
-      "id": "1458f241-6b88-490e-853a-833de0ac7d96",
-      "name": "Update record3",
-      "credentials": {
-        "airtableOAuth2Api": {
-          "id": "su4FBLDPLE74YfrP",
-          "name": "Airtable account"
-        }
-      }
     },
     {
       "parameters": {
@@ -4845,10 +4332,10 @@
       "type": "n8n-nodes-base.airtable",
       "typeVersion": 2.2,
       "position": [
-        4112,
-        768
+        3584,
+        1152
       ],
-      "id": "487bed8e-9711-4312-92c1-fe5eebc1a755",
+      "id": "f789c18a-94bc-4452-a572-9881079f84e4",
       "name": "Update record4",
       "credentials": {
         "airtableOAuth2Api": {
@@ -4864,10 +4351,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4336,
-        768
+        3808,
+        1152
       ],
-      "id": "b857dca2-547d-4507-a7db-40a8693c0e13",
+      "id": "1e6a7a1e-f30f-41e5-be87-85c059e764b6",
       "name": "Code in JavaScript5"
     },
     {
@@ -4898,10 +4385,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        3408,
-        864
+        2880,
+        1248
       ],
-      "id": "41c41100-9b73-4f79-99d3-db5ef6fc9f1e",
+      "id": "02de26a4-1ff8-4680-9aac-b8b8f0ed4f86",
       "name": "If9"
     },
     {
@@ -4915,10 +4402,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        3584,
-        976
+        3056,
+        1360
       ],
-      "id": "828b6726-62ff-4cac-b1cc-71531e56fcd9",
+      "id": "41f4a468-e109-4676-b68c-194a6a4bce6d",
       "name": "Respond to Webhook15"
     },
     {
@@ -4949,10 +4436,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        3312,
-        1312
+        2784,
+        1696
       ],
-      "id": "37c133e8-5778-4389-904c-6e9ba3634642",
+      "id": "799bb528-ed49-4aa8-aa26-49c6add7d464",
       "name": "If7"
     },
     {
@@ -4962,10 +4449,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3584,
-        1248
+        3056,
+        1632
       ],
-      "id": "c6090acb-b113-40a1-a83f-ace8fc0b205e",
+      "id": "7498bf94-2f93-48d0-992f-91d0633f5bfb",
       "name": "Build Search Formula1"
     },
     {
@@ -4992,10 +4479,10 @@
       "type": "n8n-nodes-base.airtable",
       "typeVersion": 2.2,
       "position": [
-        3840,
-        1248
+        3312,
+        1632
       ],
-      "id": "2d6dbaba-e93e-4662-8c4d-b258c222f6d2",
+      "id": "758659da-a0ed-456e-86b9-e720abca5de1",
       "name": "Search records9",
       "credentials": {
         "airtableOAuth2Api": {
@@ -5013,10 +4500,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        4368,
-        1232
+        3840,
+        1616
       ],
-      "id": "b4d120cc-55b4-41a4-bc4d-a8302631a1e8",
+      "id": "8c7c4e55-25c1-45b0-9110-941098d25ff6",
       "name": "Respond to Webhook14"
     },
     {
@@ -5030,10 +4517,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        3568,
-        1408
+        3040,
+        1792
       ],
-      "id": "290b7296-d351-47cb-9ee5-e7e3ba5d216a",
+      "id": "3c0f1d73-3439-408b-ab87-f1e8af486bd2",
       "name": "Respond to Webhook16"
     },
     {
@@ -5046,10 +4533,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        3088,
-        1312
+        2560,
+        1696
       ],
-      "id": "89b77aed-bbbd-4942-ba4b-153b97697a1d",
+      "id": "b212087a-8420-4297-96f8-2050fa1ad2d8",
       "name": "delete-reservation",
       "webhookId": "f7627aa5-f894-4236-8e5b-1c92e45f6ffb"
     },
@@ -5076,10 +4563,10 @@
       "type": "n8n-nodes-base.airtable",
       "typeVersion": 2.2,
       "position": [
-        4064,
-        1248
+        3536,
+        1632
       ],
-      "id": "5b527e7c-d8f2-4420-a25f-cd4a99607886",
+      "id": "8903b572-8dc2-48cd-9c1a-c1ae571cd542",
       "name": "Delete a record1",
       "credentials": {
         "airtableOAuth2Api": {
@@ -5116,10 +4603,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
-        3312,
-        1712
+        2784,
+        2096
       ],
-      "id": "241aee00-32e6-4340-bb97-64777a11843e",
+      "id": "f8816cce-2925-474c-8e4a-f844078ef5ef",
       "name": "If8"
     },
     {
@@ -5129,10 +4616,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        3584,
-        1648
+        3056,
+        2032
       ],
-      "id": "f01c4e40-fb35-43ac-bb70-05e9bb754900",
+      "id": "1feedf36-8ebc-457c-a545-989c86143890",
       "name": "Build Search Formula2"
     },
     {
@@ -5159,10 +4646,10 @@
       "type": "n8n-nodes-base.airtable",
       "typeVersion": 2.2,
       "position": [
-        3840,
-        1648
+        3312,
+        2032
       ],
-      "id": "8534d0dc-2744-4f90-b4b5-078e326ba335",
+      "id": "a11d0b37-5581-40d9-9cfe-cb3e737285a5",
       "name": "Search records10",
       "credentials": {
         "airtableOAuth2Api": {
@@ -5180,10 +4667,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        4368,
-        1632
+        3840,
+        2016
       ],
-      "id": "e9c69458-4761-49b3-ad72-45281710ee70",
+      "id": "d0bcf724-5aa1-43ad-91a5-f90c348e35ed",
       "name": "Respond to Webhook17"
     },
     {
@@ -5197,10 +4684,10 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        3568,
-        1808
+        3040,
+        2192
       ],
-      "id": "162e2836-1408-4ac4-8ae8-3a56ed6c8b5e",
+      "id": "aa5c11e8-fb1a-4227-a8c5-35eee46481c1",
       "name": "Respond to Webhook18"
     },
     {
@@ -5213,10 +4700,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        3088,
-        1712
+        2560,
+        2096
       ],
-      "id": "8c91cff8-a5f9-42e4-96fb-3eed494daed6",
+      "id": "614b7a55-2cfd-4a68-86c7-aa1da643c7e7",
       "name": "get-messages",
       "webhookId": "f7627aa5-f894-4236-8e5b-1c92e45f6ffb"
     },
@@ -5227,10 +4714,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        4064,
-        1648
+        3536,
+        2032
       ],
-      "id": "c75ca8c0-b6b8-4fc9-8f40-da69a2e9b712",
+      "id": "602519dc-f613-4ab0-87b6-996ca91d1553",
       "name": "Code in JavaScript6"
     },
     {
@@ -5243,10 +4730,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        2048,
-        1264
+        1520,
+        1648
       ],
-      "id": "6a5e9f2b-7b13-4a2e-9d4a-6e1a2c9b0f11",
+      "id": "72c6c2fb-6c02-4356-8ee0-e22bd0ca800b",
       "name": "escalade-relay",
       "webhookId": "6a5e9f2b-7b13-4a2e-9d4a-6e1a2c9b0f11"
     },
@@ -5261,11 +4748,12 @@
       "type": "n8n-nodes-base.whatsApp",
       "typeVersion": 1,
       "position": [
-        2272,
-        1264
+        1744,
+        1648
       ],
-      "id": "c1d3e5a7-9f21-4b6c-8a3d-2b7e4f6a1c22",
+      "id": "819aae46-53c1-41c4-b331-ca50620d679d",
       "name": "Envoyer alerte proprietaire (relay)",
+      "webhookId": "0fac424d-23df-46d5-a21e-b3d45e1ee7b4",
       "credentials": {
         "whatsAppApi": {
           "id": "cCWTApgOYy3Wfs4h",
@@ -5297,7 +4785,9 @@
             "id": "={{ $('escalade-relay').item.json.body.message_record_id }}",
             "escalade": true
           },
-          "matchingColumns": ["id"],
+          "matchingColumns": [
+            "id"
+          ],
           "schema": [
             {
               "id": "id",
@@ -5330,10 +4820,10 @@
       "type": "n8n-nodes-base.airtable",
       "typeVersion": 2.2,
       "position": [
-        2496,
-        1264
+        1968,
+        1648
       ],
-      "id": "d2e4f6a8-a032-4c7d-9b5e-3c8f5a7b2d33",
+      "id": "22d149ce-8fbc-4bc0-92cf-d31d6f95bcc7",
       "name": "Marquer escalade (Messages)",
       "credentials": {
         "airtableOAuth2Api": {
@@ -5351,11 +4841,718 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        2720,
-        1264
+        2192,
+        1648
       ],
-      "id": "e3f5a7b9-b143-4d8e-ac6f-4d9a6b8c3e44",
+      "id": "618b1126-6a76-4aed-a1a7-6bc439358573",
       "name": "Respond to Webhook - escalade-relay"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "update-property-name",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -528,
+        2224
+      ],
+      "id": "8321d371-96c7-4df5-b97f-444772b1b1ee",
+      "name": "update-property-name",
+      "webhookId": "4670d3df-67f9-4f0a-9de9-061bd65c6d5d"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"ok\": true\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        224,
+        2192
+      ],
+      "id": "4e97176e-bbf1-4f95-98e9-f12b3d7825d3",
+      "name": "Respond to Webhook19"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "1d1a5fbf-f529-4f03-95d6-b2efd40612ff",
+              "leftValue": "={{ $json.headers['x-webhook-secret'] }}",
+              "rightValue": "yga7K9mP2xQzR4vL8nJ6wTcF3hB5sD1e",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -304,
+        2224
+      ],
+      "id": "5d50265e-8847-48f0-9ff0-c059b93c0bfb",
+      "name": "If10"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"error\": \"unauthorized\"}",
+        "options": {
+          "responseCode": 401
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -64,
+        2320
+      ],
+      "id": "4913adcf-35ca-432b-ad57-853b59b27b3a",
+      "name": "Respond to Webhook20"
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "update",
+        "base": {
+          "__rl": true,
+          "value": "appU4bRp75gisWKzx",
+          "mode": "list",
+          "cachedResultName": "Conciergerie Logements",
+          "cachedResultUrl": "https://airtable.com/appU4bRp75gisWKzx"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblQQfqyG7vRz8b21",
+          "mode": "list",
+          "cachedResultName": "Logements",
+          "cachedResultUrl": "https://airtable.com/appU4bRp75gisWKzx/tblQQfqyG7vRz8b21"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "id_logement": "={{ $json.body.id_logement }}",
+            "Name": "={{ $json.body.nom }}"
+          },
+          "matchingColumns": [
+            "id_logement"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Name",
+              "displayName": "Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Attachment Summary",
+              "displayName": "Attachment Summary",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "ville",
+              "displayName": "ville",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "wifi_nom",
+              "displayName": "wifi_nom",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "wifi_code",
+              "displayName": "wifi_code",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Code_Acces",
+              "displayName": "Code_Acces",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "checkin",
+              "displayName": "checkin",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "checkout",
+              "displayName": "checkout",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "adresse",
+              "displayName": "adresse",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "parking",
+              "displayName": "parking",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "regle",
+              "displayName": "regle",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "contact",
+              "displayName": "contact",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Host Email",
+              "displayName": "Host Email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Reservations",
+              "displayName": "Reservations",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "numero_proprietaire",
+              "displayName": "numero_proprietaire",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Numero_Whatsapp",
+              "displayName": "Numero_Whatsapp",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "url_ical",
+              "displayName": "url_ical",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Reservations 2",
+              "displayName": "Reservations 2",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Staff",
+              "displayName": "Staff",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "photo_url",
+              "displayName": "photo_url",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "checkin_heure",
+              "displayName": "checkin_heure",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "checkout_heure",
+              "displayName": "checkout_heure",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "parking_info",
+              "displayName": "parking_info",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "regles_maison",
+              "displayName": "regles_maison",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "equipements",
+              "displayName": "equipements",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "recommandations",
+              "displayName": "recommandations",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "contact_urgence",
+              "displayName": "contact_urgence",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "id_logement",
+              "displayName": "id_logement",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "staff_menage",
+              "displayName": "staff_menage",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "Name (from staff_menage)",
+              "displayName": "Name (from staff_menage)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Role (from staff_menage)",
+              "displayName": "Role (from staff_menage)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Phone (from staff_menage)",
+              "displayName": "Phone (from staff_menage)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Assigned Logements (from staff_menage)",
+              "displayName": "Assigned Logements (from staff_menage)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Assigned Conciergeries (from staff_menage)",
+              "displayName": "Assigned Conciergeries (from staff_menage)",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Messages",
+              "displayName": "Messages",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "array",
+              "readOnly": false,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        -48,
+        2080
+      ],
+      "id": "51e09d55-bf89-470c-95b4-0c940387109f",
+      "name": "Update record5",
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "su4FBLDPLE74YfrP",
+          "name": "Airtable account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "delete-messages-conversation",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        1008,
+        2320
+      ],
+      "id": "33715043-d54d-481e-9cc4-235cdabfe094",
+      "name": "delete-messages-conversation",
+      "webhookId": "982d3636-e716-4fa2-a2a5-b7ff908c21fb"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "1d1a5fbf-f529-4f03-95d6-b2efd40612ff",
+              "leftValue": "={{ $json.headers['x-webhook-secret'] }}",
+              "rightValue": "yga7K9mP2xQzR4vL8nJ6wTcF3hB5sD1e",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        1280,
+        2320
+      ],
+      "id": "a07575ca-25a4-44fd-8ba7-3b2ab00f6df7",
+      "name": "If11"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $('delete-messages-conversation').first().json.body;\nconst messageIds = body.message_ids || [];\n\nreturn messageIds.map((id) => ({ json: { id } }));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1504,
+        2224
+      ],
+      "id": "24bda1a9-eb14-4903-8902-1013750dc7a5",
+      "name": "Code in JavaScript7"
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "deleteRecord",
+        "base": {
+          "__rl": true,
+          "value": "appU4bRp75gisWKzx",
+          "mode": "list",
+          "cachedResultName": "Conciergerie Logements",
+          "cachedResultUrl": "https://airtable.com/appU4bRp75gisWKzx"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblGuFOIXtDxHC5gk",
+          "mode": "list",
+          "cachedResultName": "Messages",
+          "cachedResultUrl": "https://airtable.com/appU4bRp75gisWKzx/tblGuFOIXtDxHC5gk"
+        },
+        "id": "={{ $json.id.trim() }}"
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        1744,
+        2224
+      ],
+      "id": "2ea5e5cd-a0ce-43d8-b483-e76afe611f08",
+      "name": "Delete a record2",
+      "alwaysOutputData": true,
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "su4FBLDPLE74YfrP",
+          "name": "Airtable account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"ok\": true\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        2000,
+        2224
+      ],
+      "id": "bf5d8a63-02fe-4866-9345-a02cb6cf648d",
+      "name": "Respond to Webhook21"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"error\": \"unauthorized\"}",
+        "options": {
+          "responseCode": 401
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1536,
+        2400
+      ],
+      "id": "2163ce40-58ad-42df-a224-68129e0766da",
+      "name": "Respond to Webhook22"
+    },
+    {
+      "parameters": {
+        "authentication": "airtableOAuth2Api",
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appU4bRp75gisWKzx",
+          "mode": "list",
+          "cachedResultName": "Conciergerie Logements",
+          "cachedResultUrl": "https://airtable.com/appU4bRp75gisWKzx"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblGuFOIXtDxHC5gk",
+          "mode": "list",
+          "cachedResultName": "Messages",
+          "cachedResultUrl": "https://airtable.com/appU4bRp75gisWKzx/tblGuFOIXtDxHC5gk"
+        },
+        "filterByFormula": "={{ $('Code in JavaScript7').item.json.formula }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.2,
+      "position": [
+        2336,
+        2528
+      ],
+      "id": "25371f42-60f5-48d6-bad7-d29920c30577",
+      "name": "Search records11",
+      "alwaysOutputData": true,
+      "credentials": {
+        "airtableOAuth2Api": {
+          "id": "su4FBLDPLE74YfrP",
+          "name": "Airtable account"
+        }
+      }
     }
   ],
   "pinData": {
@@ -5389,6 +5586,49 @@
             }
           ],
           "field": "messages"
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ],
+    "delete-messages-conversation": [
+      {
+        "json": {
+          "headers": {
+            "host": "guestai.app.n8n.cloud",
+            "user-agent": "node",
+            "content-length": "37",
+            "accept": "*/*",
+            "accept-encoding": "gzip, br",
+            "accept-language": "*",
+            "cdn-loop": "cloudflare; loops=1; subreqs=1",
+            "cf-connecting-ip": "37.67.72.133",
+            "cf-ew-via": "15",
+            "cf-ipcountry": "FR",
+            "cf-ray": "a36e98ec2c7d83c5-MRS",
+            "cf-visitor": "{\"scheme\":\"https\"}",
+            "cf-worker": "n8n.cloud",
+            "content-type": "application/json",
+            "sec-fetch-mode": "cors",
+            "x-forwarded-for": "37.67.72.133, 162.158.23.55",
+            "x-forwarded-host": "guestai.app.n8n.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "traefik-prod-users-swc-37-c6fbbc655-qqcmm",
+            "x-is-trusted": "yes",
+            "x-real-ip": "37.67.72.133",
+            "x-webhook-secret": "yga7K9mP2xQzR4vL8nJ6wTcF3hB5sD1e"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "message_ids": [
+              "recg7dGMD4jyIdFKF"
+            ]
+          },
+          "webhookUrl": "https://guestai.app.n8n.cloud/webhook/delete-messages-conversation",
+          "executionMode": "production"
         },
         "pairedItem": {
           "item": 0
@@ -5747,57 +5987,6 @@
         ]
       ]
     },
-    "update-property-name": {
-      "main": [
-        [
-          {
-            "node": "If - update-property-name",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "If - update-property-name": {
-      "main": [
-        [
-          {
-            "node": "Chercher logement (rename)",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Respond to Webhook - rename unauthorized",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Chercher logement (rename)": {
-      "main": [
-        [
-          {
-            "node": "Renommer logement (Update)",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Renommer logement (Update)": {
-      "main": [
-        [
-          {
-            "node": "Respond to Webhook - rename",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "create1": {
       "main": [
         [
@@ -6072,11 +6261,6 @@
         ]
       ]
     },
-    "Respond to Webhook10": {
-      "main": [
-        []
-      ]
-    },
     "Update record2": {
       "main": [
         [
@@ -6328,6 +6512,102 @@
           }
         ]
       ]
+    },
+    "update-property-name": {
+      "main": [
+        [
+          {
+            "node": "If10",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If10": {
+      "main": [
+        [
+          {
+            "node": "Update record5",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook20",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update record5": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook19",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "delete-messages-conversation": {
+      "main": [
+        [
+          {
+            "node": "If11",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If11": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript7",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook22",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript7": {
+      "main": [
+        [
+          {
+            "node": "Delete a record2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete a record2": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook21",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Search records11": {
+      "main": [
+        []
+      ]
     }
   },
   "active": true,
@@ -6335,12 +6615,12 @@
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "34e03778-0f14-4585-817a-604e0d15a5d5",
+  "versionId": "47a7771b-44b3-49d1-841e-b90d618cdb0f",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "2550996d526c4fe303c5fb7104936c6fffa1220a1b162392d1d475f9e9c7afbf"
   },
   "nodeGroups": [],
-  "id": "Md9HuU9YxiRv1OPt",
+  "id": "Und99g08pVlPGRy5",
   "tags": []
 }
