@@ -21,6 +21,24 @@ const problems = [
 export default function Home() {
   return (
     <main>
+      {/* HEADER */}
+      <div className="border-b border-night-800">
+        <div className="mx-auto flex max-w-6xl items-center justify-end gap-3 px-6 py-4">
+          <Link
+            href="/login"
+            className="rounded-lg bg-porch-500 px-4 py-2 text-sm font-semibold text-night-950 transition hover:bg-porch-400"
+          >
+            Espace hôte
+          </Link>
+          <Link
+            href="/signup"
+            className="rounded-lg bg-night-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-night-600"
+          >
+            Inscription
+          </Link>
+        </div>
+      </div>
+
       {/* HERO */}
       <section className="relative overflow-hidden border-b border-night-800">
         <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-16 px-6 py-24 lg:grid-cols-2 lg:py-32">
