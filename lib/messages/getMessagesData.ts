@@ -4,12 +4,19 @@ import { normalize } from "@/lib/airtable/normalize";
 export type Conversation = {
   telephone: string;
   logement: string;
+  property_id: string;
   message_count: number;
   escalade_count: number;
   first_date: string;
   last_date: string;
   last_sens: string;
   statut_reservation: "EN_COURS" | "PROCHAIN" | "PASSE" | "INCONNU";
+  // Identifiants Airtable exacts des messages de cette conversation. Sert a
+  // la suppression : on demande a n8n de supprimer CES ids precis, plutot
+  // que de lui faire rechercher par id_logement/telephone (une comparaison
+  // de texte qui peut echouer silencieusement a cause d'un caractere
+  // invisible cache dans la donnee Airtable).
+  message_ids: string[];
 };
 
 export type LogementSummary = {
@@ -196,6 +203,7 @@ export async function getMessagesData(
       return {
         id: m.id,
         logement: property?.nom ?? m.id_logement,
+        property_id: property?.id ?? "",
         telephone: m.telephone ?? "",
         date: m.date ?? "",
         sens: m.sens ?? "",
@@ -224,11 +232,13 @@ export async function getMessagesData(
     {
       telephone: string;
       logement: string;
+      property_id: string;
       message_count: number;
       escalade_count: number;
       first_date: string;
       last_date: string;
       last_sens: string;
+      message_ids: string[];
     }
   >();
 
@@ -239,11 +249,13 @@ export async function getMessagesData(
       conversations.set(key, {
         telephone: m.telephone,
         logement: m.logement,
+        property_id: m.property_id,
         message_count: 1,
         escalade_count: m.escalade ? 1 : 0,
         first_date: m.date,
         last_date: m.date,
         last_sens: m.sens,
+        message_ids: [m.id],
       });
     } else {
       existing.message_count += 1;
@@ -255,6 +267,7 @@ export async function getMessagesData(
         existing.last_date = m.date;
         existing.last_sens = m.sens;
       }
+      existing.message_ids.push(m.id);
     }
   }
 

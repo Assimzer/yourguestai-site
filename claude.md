@@ -102,17 +102,4 @@ logement configurées par l'hôte.
 - Ne jamais modifier ou créer de nœuds n8n directement — toujours expliquer
   précisément à l'utilisateur quel nœud toucher et donner le code exact à
   copier-coller lui-même.
-  
-  - 🚧 À faire : deux améliorations sur l'édition du livret d'accueil
-  (`/dashboard/logements/[id]/guide`) :
-  1. Ajouter une photo au logement en déposant un fichier image (jpeg, png...)
-     directement, en plus (ou à la place) de la simple saisie d'URL actuelle.
-     Utiliser Supabase Storage pour l'hébergement du fichier (bucket dédié,
-     ex: `logement-photos`), récupérer l'URL publique générée et la stocker
-     dans Supabase/Airtable comme c'est déjà fait pour une URL classique.
-  2. Autocomplétion d'adresse : quand l'hôte commence à taper l'adresse du
-     logement, proposer une liste de suggestions à sélectionner plutôt que
-     de la taper entièrement à la main. Utiliser l'API Adresse du
-     gouvernement français (`https://api-adresse.data.gouv.fr/search/?q=...`,
-     gratuite, sans clé API requise) plutôt que Google Places (payant) —
-     adapté puisque le service cible la France.
+ 

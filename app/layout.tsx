@@ -21,10 +21,30 @@ const mono = JetBrains_Mono({
   variable: "--font-mono",
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_URL || "http://localhost:3000";
+const title = "YOURGUESTAI — LÉO, votre concierge WhatsApp qui ne dort jamais";
+const description =
+  "L'IA qui répond à vos voyageurs sur WhatsApp en moins de 30 secondes, 24h/24, pendant que vous dormez.";
+
 export const metadata: Metadata = {
-  title: "YOURGUESTAI — LÉO, votre concierge WhatsApp qui ne dort jamais",
-  description:
-    "L'IA qui répond à vos voyageurs sur WhatsApp, 24h/24, pendant que vous dormez.",
+  metadataBase: new URL(siteUrl),
+  title,
+  description,
+  openGraph: {
+    title,
+    description,
+    url: siteUrl,
+    siteName: "YOURGUESTAI",
+    images: [{ url: "/og-image.png", width: 1254, height: 1254 }],
+    locale: "fr_FR",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title,
+    description,
+    images: ["/og-image.png"],
+  },
 };
 
 export default function RootLayout({

@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 type Conversation = {
   telephone: string;
   logement: string;
+  property_id: string;
   message_count: number;
   escalade_count: number;
   first_date: string;
@@ -88,13 +89,49 @@ export default function MessagesList({
   initialConversations: Conversation[];
   initialError: string | null;
 }) {
-  const [conversations] = useState<Conversation[]>(initialConversations);
+  const [conversations, setConversations] = useState<Conversation[]>(initialConversations);
   const [error] = useState<string | null>(initialError);
 
   const [logementFilter, setLogementFilter] = useState("tous");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [escaladeOnly, setEscaladeOnly] = useState(false);
+
+  const [confirmingKey, setConfirmingKey] = useState<string | null>(null);
+  const [deletingKey, setDeletingKey] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  async function handleDelete(c: Conversation) {
+    const key = `${c.telephone}-${c.logement}`;
+    setDeletingKey(key);
+    setDeleteError(null);
+
+    try {
+      const res = await fetch("/api/messages/delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          property_id: c.property_id,
+          telephone: c.telephone,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setDeleteError(data.error ?? "Échec de la suppression.");
+        return;
+      }
+
+      setConversations((prev) =>
+        prev.filter((x) => `${x.telephone}-${x.logement}` !== key)
+      );
+      setConfirmingKey(null);
+    } catch {
+      setDeleteError("Impossible de contacter le serveur.");
+    } finally {
+      setDeletingKey(null);
+    }
+  }
 
   const logements = useMemo(
     () => Array.from(new Set(conversations.map((c) => c.logement))).sort(),
@@ -251,40 +288,91 @@ export default function MessagesList({
               const badge = sensBadge(c.last_sens);
               const statut = statutBadge(c.statut_reservation);
               const duree = formatDuration(c.first_date, c.last_date);
+              const key = `${c.telephone}-${c.logement}`;
+              const isConfirming = confirmingKey === key;
+              const isDeleting = deletingKey === key;
+
               return (
                 <div
-                  key={`${c.telephone}-${c.logement}`}
-                  className="flex items-center justify-between gap-3 rounded-2xl border border-night-600 bg-night-900 p-4"
+                  key={key}
+                  className="rounded-2xl border border-night-600 bg-night-900 p-4"
                 >
-                  <div>
-                    <p className="text-sm font-medium text-white">
-                      {c.telephone || "Numéro inconnu"}
-                      <span className="ml-2 text-xs text-mist-500">{c.logement}</span>
-                    </p>
-                    <p className="mt-0.5 text-xs text-mist-400">
-                      {c.message_count} message{c.message_count > 1 ? "s" : ""}
-                      {duree ? ` · ${duree}` : ""} · {formatRelative(c.last_date)}
-                    </p>
-                  </div>
-                  <div className="flex flex-shrink-0 items-center gap-2">
-                    {statut && (
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-medium text-white">
+                        {c.telephone || "Numéro inconnu"}
+                        <span className="ml-2 text-xs text-mist-500">{c.logement}</span>
+                      </p>
+                      <p className="mt-0.5 text-xs text-mist-400">
+                        {c.message_count} message{c.message_count > 1 ? "s" : ""}
+                        {duree ? ` · ${duree}` : ""} · {formatRelative(c.last_date)}
+                      </p>
+                    </div>
+                    <div className="flex flex-shrink-0 items-center gap-2">
+                      {statut && (
+                        <span
+                          className={`rounded-full px-3 py-1 text-[11px] font-medium ${statut.className}`}
+                        >
+                          {statut.label}
+                        </span>
+                      )}
+                      {c.escalade_count > 0 && (
+                        <span className="rounded-full bg-warn/20 px-3 py-1 text-[11px] font-medium text-warn">
+                          Escaladé
+                        </span>
+                      )}
                       <span
-                        className={`rounded-full px-3 py-1 text-[11px] font-medium ${statut.className}`}
+                        className={`rounded-full px-3 py-1 text-[11px] font-medium ${badge.className}`}
                       >
-                        {statut.label}
+                        {badge.label}
                       </span>
-                    )}
-                    {c.escalade_count > 0 && (
-                      <span className="rounded-full bg-warn/20 px-3 py-1 text-[11px] font-medium text-warn">
-                        Escaladé
-                      </span>
-                    )}
-                    <span
-                      className={`rounded-full px-3 py-1 text-[11px] font-medium ${badge.className}`}
-                    >
-                      {badge.label}
-                    </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDeleteError(null);
+                          setConfirmingKey(key);
+                        }}
+                        title="Supprimer cette conversation"
+                        className="rounded-full border border-night-600 p-1.5 text-mist-500 transition hover:border-warn/40 hover:text-warn"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14Z" />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
+
+                  {isConfirming && (
+                    <div className="mt-3 rounded-lg border border-warn/30 bg-warn/10 p-3">
+                      <p className="text-xs text-white">
+                        Supprimer définitivement tous les messages de cette
+                        conversation ({c.message_count} message
+                        {c.message_count > 1 ? "s" : ""}) ? Cette action est
+                        irréversible.
+                      </p>
+                      <div className="mt-2 flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(c)}
+                          disabled={isDeleting}
+                          className="rounded-md bg-warn px-3 py-1.5 text-xs font-semibold text-night-950 transition hover:opacity-90 disabled:opacity-60"
+                        >
+                          {isDeleting ? "Suppression..." : "Confirmer"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmingKey(null)}
+                          disabled={isDeleting}
+                          className="rounded-md border border-night-600 px-3 py-1.5 text-xs text-mist-400 transition hover:text-white"
+                        >
+                          Annuler
+                        </button>
+                      </div>
+                      {deleteError && (
+                        <p className="mt-2 text-xs text-warn">{deleteError}</p>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}

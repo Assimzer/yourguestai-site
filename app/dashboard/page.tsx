@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import MessagesActivityChart from "./MessagesActivityChart";
+import WhatsappQrCard from "./WhatsappQrCard";
 
 export default async function DashboardOverview() {
   const supabase = createClient();
@@ -32,6 +33,8 @@ export default async function DashboardOverview() {
       </div>
 
       {total > 0 && <MessagesActivityChart />}
+
+      <WhatsappQrCard />
 
       {total === 0 ? (
         <div className="mt-10 rounded-2xl border border-dashed border-night-600 px-6 py-14 text-center">
