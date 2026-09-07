@@ -1324,7 +1324,7 @@
           "mappingMode": "defineBelow",
           "value": {
             "id_logement": "={{ $json.body.id_logement }}",
-            "Name": "={{ $json.body.nom }}"
+            "Name": "={{ $json.body.id_logement }}"
           },
           "matchingColumns": [],
           "schema": [
@@ -4952,7 +4952,7 @@
           "mappingMode": "defineBelow",
           "value": {
             "id_logement": "={{ $json.body.id_logement }}",
-            "Name": "={{ $json.body.nom }}"
+            "Name": "={{ $json.body.id_logement }}"
           },
           "matchingColumns": [
             "id_logement"
