@@ -18,6 +18,29 @@ const problems = [
   },
 ];
 
+const faqs = [
+  {
+    q: "Que se passe-t-il si j'ajoute un logement supplémentaire ?",
+    a: "Le tarif par logement s'ajuste automatiquement au palier correspondant dès que vous ajoutez un logement depuis votre tableau de bord — aucune démarche manuelle nécessaire.",
+  },
+  {
+    q: "Puis-je résilier à tout moment ?",
+    a: "Oui. Aucun engagement de durée : vous pouvez suspendre ou résilier un logement depuis votre espace hôte quand vous le souhaitez.",
+  },
+  {
+    q: "Combien coûte la mise en service ?",
+    a: "Rien. La mise en route (connexion du calendrier, remplissage du livret d'accueil) est gratuite et prend quelques minutes.",
+  },
+  {
+    q: "Quand commence la facturation ?",
+    a: "Après votre essai gratuit de 14 jours. Vous pouvez annuler avant la fin de l'essai sans être facturé.",
+  },
+  {
+    q: "LÉO remplace-t-il mon calendrier ou mon PMS ?",
+    a: "Non. LÉO se connecte à votre calendrier existant via un lien iCal pour suivre vos réservations — il ne remplace aucun outil que vous utilisez déjà.",
+  },
+];
+
 export default function Home() {
   return (
     <main>
@@ -238,6 +261,39 @@ export default function Home() {
             jours.
           </p>
           <PricingSection />
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="border-b border-night-800">
+        <div className="mx-auto max-w-2xl px-6 py-20">
+          <p className="text-center font-mono text-xs uppercase tracking-[0.2em] text-porch-500">
+            Questions fréquentes
+          </p>
+          <h2 className="mt-3 text-center font-display text-3xl italic text-white">
+            Tout ce que vous devez savoir avant de commencer.
+          </h2>
+
+          <div className="mt-10 flex flex-col gap-3">
+            {faqs.map((f) => (
+              <details
+                key={f.q}
+                className="group rounded-xl border border-night-600 bg-night-900 px-5 py-4 open:border-porch-500/40"
+              >
+                <summary className="cursor-pointer list-none text-sm font-semibold text-white marker:content-none">
+                  <span className="flex items-center justify-between gap-4">
+                    {f.q}
+                    <span className="text-mist-500 transition group-open:rotate-45">
+                      +
+                    </span>
+                  </span>
+                </summary>
+                <p className="mt-3 text-sm leading-relaxed text-mist-400">
+                  {f.a}
+                </p>
+              </details>
+            ))}
+          </div>
         </div>
       </section>
 
