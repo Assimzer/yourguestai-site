@@ -17,6 +17,7 @@ const sections = [
     label: "Compte",
     items: [
       { href: "/dashboard/compte", label: "Mon compte", icon: "⚙️" },
+      { href: "/dashboard/aide", label: "Aide", icon: "❓" },
     ],
   },
 ];
