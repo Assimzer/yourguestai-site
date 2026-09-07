@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
@@ -12,6 +12,20 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
+  const [checkingSession, setCheckingSession] = useState(true);
+
+  useEffect(() => {
+    // Evite de reafficher le formulaire (et de redemander email/mot de passe)
+    // quand une session valide existe deja — ex: retour sur "Espace hote"
+    // depuis la page d'accueil alors qu'on est deja connecte.
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        router.replace("/dashboard");
+      } else {
+        setCheckingSession(false);
+      }
+    });
+  }, [router, supabase]);
 
   async function handlePasswordLogin(e: React.FormEvent) {
     e.preventDefault();
@@ -27,6 +41,14 @@ export default function LoginPage() {
     }
     router.push("/dashboard");
     router.refresh();
+  }
+
+  if (checkingSession) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-night-950 px-6">
+        <p className="text-sm text-mist-400">Chargement...</p>
+      </main>
+    );
   }
 
   return (
