@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import LogoutButton from "./LogoutButton";
 import SidebarNav from "./SidebarNav";
+import MobileNav from "./MobileNav";
 
 export default async function DashboardLayout({
   children,
@@ -34,9 +35,12 @@ export default async function DashboardLayout({
 
       <div className="flex-1">
         <header className="flex items-center justify-between border-b border-night-800 px-6 py-4 sm:hidden">
-          <Link href="/" className="font-display text-lg italic text-white">
-            YOURGUESTAI
-          </Link>
+          <div className="flex items-center gap-3">
+            <MobileNav userEmail={user.email ?? ""} />
+            <Link href="/" className="font-display text-lg italic text-white">
+              YOURGUESTAI
+            </Link>
+          </div>
           <LogoutButton />
         </header>
         <main className="px-6 py-10 sm:px-10">{children}</main>
