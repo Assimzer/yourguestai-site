@@ -93,7 +93,7 @@ export default function TarifsCalculator() {
         <input
           type="range"
           min={1}
-          max={15}
+          max={30}
           value={count}
           onChange={(e) => setCount(Number(e.target.value))}
           className="mt-6 w-full accent-porch-500"
