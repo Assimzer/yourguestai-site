@@ -8,7 +8,7 @@ export async function POST(request: Request) {
   const { supabase, user } = auth;
 
   const body = await request.json();
-  const { property_id, ...fields } = body;
+  const { property_id } = body;
 
   if (!property_id) return NextResponse.json({ error: "Paramètre manquant" }, { status: 400 });
 
@@ -22,6 +22,26 @@ export async function POST(request: Request) {
   if (error || !property || property.host_id !== user.id)
     return NextResponse.json({ error: "Logement introuvable" }, { status: 404 });
 
+  // Liste explicite des champs autorisés : évite qu'un champ arbitraire
+  // envoyé par le client (ex: "id_logement") n'écrase la valeur vérifiée
+  // ci-dessus et ne redirige la mise à jour vers le logement d'un autre hôte.
+  const {
+    adresse,
+    photo_url,
+    checkin_heure,
+    checkout_heure,
+    code_acces,
+    wifi_nom,
+    wifi_code,
+    parking_info,
+    parking_photo_url,
+    equipements,
+    equipements_photo_url,
+    regles_maison,
+    recommandations,
+    contact_urgence,
+  } = body;
+
   // Envoie au webhook n8n update-guide (POST)
   const res = await fetch(process.env.N8N_UPDATE_GUIDE_WEBHOOK_URL!, {
     method: "POST",
@@ -31,7 +51,20 @@ export async function POST(request: Request) {
     },
     body: JSON.stringify({
       id_logement: property.cle_unique_airtable,
-      ...fields,
+      adresse,
+      photo_url,
+      checkin_heure,
+      checkout_heure,
+      code_acces,
+      wifi_nom,
+      wifi_code,
+      parking_info,
+      parking_photo_url,
+      equipements,
+      equipements_photo_url,
+      regles_maison,
+      recommandations,
+      contact_urgence,
     }),
   });
 
