@@ -6,11 +6,15 @@ const INVISIBLE_CHARS_RE = new RegExp(`[${INVISIBLE_CHARS}]`, "g");
 // Un champ lookup Airtable peut contenir un caractere invisible (espace
 // insecable, zero-largeur, BOM) qui casse une egalite stricte tout en
 // semblant identique a l'oeil — d'ou ce nettoyage avant toute comparaison
-// entre une cle Supabase (cle_unique_airtable) et une cle Airtable (id_logement).
+// entre une cle Supabase (cle_unique_airtable, ex: "appart_dans_le_sud") et
+// une cle Airtable (id_logement, ex: "appart dans le sud" ou deja au format
+// slug selon comment le logement a ete cree) : espaces et underscores sont
+// aussi retires pour tolerer les deux formats.
 export function normalize(s: string) {
   return (s || "")
     .normalize("NFKC")
     .replace(INVISIBLE_CHARS_RE, "")
     .trim()
-    .toLowerCase();
+    .toLowerCase()
+    .replace(/[\s_]+/g, "");
 }
