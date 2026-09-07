@@ -1,10 +1,11 @@
 import Link from "next/link";
+import SiteHeader from "../components/SiteHeader";
 import TarifsCalculator from "./TarifsCalculator";
 
 const features = [
   {
-    title: "Concierge IA 24h/24 sur WhatsApp",
-    text: "LÉO répond aux voyageurs en moins de 30 secondes, à toute heure — Wi-Fi, code d'accès, horaires, consignes de la maison.",
+    title: "Concierge IA 24h/24, multilingue",
+    text: "LÉO répond aux voyageurs en moins de 30 secondes, à toute heure — il détecte automatiquement la langue du voyageur et répond dans cette même langue.",
   },
   {
     title: "Un livret d'accueil par logement",
@@ -54,23 +55,7 @@ const faqs = [
 export default function TarifsPage() {
   return (
     <main>
-      {/* HEADER */}
-      <div className="border-b border-night-800">
-        <div className="mx-auto flex max-w-6xl items-center justify-end gap-3 px-6 py-4">
-          <Link
-            href="/login"
-            className="rounded-lg bg-porch-500 px-4 py-2 text-sm font-semibold text-night-950 transition hover:bg-porch-400"
-          >
-            Espace hôte
-          </Link>
-          <Link
-            href="/signup"
-            className="rounded-lg bg-night-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-night-600"
-          >
-            Inscription
-          </Link>
-        </div>
-      </div>
+      <SiteHeader />
 
       {/* HERO */}
       <section className="border-b border-night-800 bg-night-900/40">
