@@ -12,7 +12,9 @@ type GuideFields = {
   wifi_nom: string;
   wifi_code: string;
   parking_info: string;
+  parking_photo_url: string;
   equipements: string;
+  equipements_photo_url: string;
   regles_maison: string;
   recommandations: string;
   contact_urgence: string;
@@ -27,7 +29,9 @@ const EMPTY: GuideFields = {
   wifi_nom: "",
   wifi_code: "",
   parking_info: "",
+  parking_photo_url: "",
   equipements: "",
+  equipements_photo_url: "",
   regles_maison: "",
   recommandations: "",
   contact_urgence: "",
@@ -77,7 +81,9 @@ export default function GuideEditor({
           wifi_nom: f.wifi_nom ?? "",
           wifi_code: f.wifi_code ?? "",
           parking_info: f.parking_info ?? f.parking ?? "",
+          parking_photo_url: f.parking_photo_url ?? "",
           equipements: f.equipements ?? "",
+          equipements_photo_url: f.equipements_photo_url ?? "",
           regles_maison: f.regles_maison ?? f.regle ?? "",
           recommandations: f.recommandations ?? "",
           contact_urgence: f.contact_urgence ?? f.contact ?? "",
@@ -388,6 +394,18 @@ export default function GuideEditor({
             placeholder="Sur place devant la maison, gratuit…"
           />
         </Field>
+        <PhotoUploadField
+          label="Photo preuve du parking"
+          hint="LÉO pourra partager ce lien aux voyageurs qui demandent où se garer."
+          value={fields.parking_photo_url}
+          onChange={(url) => {
+            setFields((prev) => ({ ...prev, parking_photo_url: url }));
+            setSaved(false);
+          }}
+          userId={userId}
+          propertyId={propertyId}
+          fileSuffix="parking"
+        />
       </Section>
 
       {/* Section : Équipements */}
@@ -400,6 +418,18 @@ export default function GuideEditor({
             placeholder="Lave-linge, sèche-linge, poêle à bois, TV…"
           />
         </Field>
+        <PhotoUploadField
+          label="Photo des équipements"
+          hint="LÉO pourra partager ce lien aux voyageurs qui demandent une preuve visuelle des équipements."
+          value={fields.equipements_photo_url}
+          onChange={(url) => {
+            setFields((prev) => ({ ...prev, equipements_photo_url: url }));
+            setSaved(false);
+          }}
+          userId={userId}
+          propertyId={propertyId}
+          fileSuffix="equipements"
+        />
       </Section>
 
       {/* Section : Règles */}
@@ -468,6 +498,99 @@ function Section({
     <div className="rounded-2xl border border-night-700 bg-night-900 p-6">
       <h3 className="mb-5 text-sm font-semibold text-white">{title}</h3>
       <div className="space-y-4">{children}</div>
+    </div>
+  );
+}
+
+function PhotoUploadField({
+  label,
+  hint,
+  value,
+  onChange,
+  userId,
+  propertyId,
+  fileSuffix,
+}: {
+  label: string;
+  hint?: string;
+  value: string;
+  onChange: (url: string) => void;
+  userId: string;
+  propertyId: string;
+  fileSuffix: string;
+}) {
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState("");
+
+  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // permet de re-sélectionner le même fichier ensuite
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setError("Merci de choisir un fichier image (jpeg, png...).");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Image trop lourde (5 Mo max).");
+      return;
+    }
+
+    setUploading(true);
+    setError("");
+
+    try {
+      const supabase = createClient();
+      const extension = file.name.split(".").pop() || "jpg";
+      const path = `${userId}/${propertyId}/${fileSuffix}.${extension}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("logement-photos")
+        .upload(path, file, { upsert: true, cacheControl: "3600" });
+
+      if (uploadError) {
+        setError("Échec de l'envoi. Réessaie.");
+        return;
+      }
+
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("logement-photos").getPublicUrl(path);
+
+      // Évite que le navigateur affiche une version mise en cache de
+      // l'ancienne image après un remplacement (même chemin de fichier).
+      onChange(`${publicUrl}?t=${Date.now()}`);
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  return (
+    <div>
+      <label className="mb-1.5 block text-xs font-medium text-mist-400">
+        {label}
+      </label>
+      {hint && <p className="mb-2 text-xs text-mist-500">{hint}</p>}
+      <div className="flex items-center gap-3">
+        {value && (
+          <img
+            src={value}
+            alt="Aperçu"
+            className="h-14 w-20 rounded-lg object-cover"
+          />
+        )}
+        <label className="cursor-pointer rounded-lg border border-night-600 bg-night-800 px-3 py-2 text-xs font-medium text-mist-300 transition hover:border-porch-500/40 hover:text-white">
+          {uploading ? "Envoi..." : value ? "Changer l'image" : "Déposer une image"}
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleUpload}
+            disabled={uploading}
+            className="hidden"
+          />
+        </label>
+      </div>
+      {error && <p className="mt-2 text-xs text-warn">{error}</p>}
     </div>
   );
 }
