@@ -1,6 +1,35 @@
 import { NextResponse } from "next/server";
 import { requireUser, isAuthError } from "@/lib/supabase/requireUser";
 
+// Bloque uniquement les cibles internes/privées (localhost, IP privées,
+// lien-local, adresse de métadonnées cloud) — jamais utilisées par une
+// vraie URL iCal Airbnb/Booking/autre plateforme — pour empêcher qu'un
+// hôte force le serveur n8n à faire une requête vers le réseau interne
+// (SSRF) via ce champ. Ne restreint aucun nom de domaine externe légitime.
+function targetsPrivateNetwork(hostname: string) {
+  const host = hostname.toLowerCase();
+  if (host === "localhost" || host.endsWith(".localhost")) return true;
+
+  // IPv4 littérale
+  const ipv4 = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+  if (ipv4) {
+    const [a, b] = [Number(ipv4[1]), Number(ipv4[2])];
+    if (a === 127) return true; // loopback
+    if (a === 10) return true; // 10.0.0.0/8
+    if (a === 172 && b >= 16 && b <= 31) return true; // 172.16.0.0/12
+    if (a === 192 && b === 168) return true; // 192.168.0.0/16
+    if (a === 169 && b === 254) return true; // lien-local / métadonnées cloud
+    if (a === 0) return true;
+  }
+
+  // IPv6 loopback / lien-local
+  if (host === "::1" || host.startsWith("fe80:") || host.startsWith("[::1]")) {
+    return true;
+  }
+
+  return false;
+}
+
 export async function POST(request: Request) {
   const auth = await requireUser();
   if (isAuthError(auth)) return auth;
@@ -9,6 +38,17 @@ export async function POST(request: Request) {
   const { property_id, ical_url } = await request.json();
 
   if (!property_id || !ical_url || !/^https?:\/\//.test(ical_url)) {
+    return NextResponse.json({ error: "Lien iCal invalide" }, { status: 400 });
+  }
+
+  let parsedUrl: URL;
+  try {
+    parsedUrl = new URL(ical_url);
+  } catch {
+    return NextResponse.json({ error: "Lien iCal invalide" }, { status: 400 });
+  }
+
+  if (targetsPrivateNetwork(parsedUrl.hostname)) {
     return NextResponse.json({ error: "Lien iCal invalide" }, { status: 400 });
   }
 
