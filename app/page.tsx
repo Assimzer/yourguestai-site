@@ -67,7 +67,7 @@ export default function Home() {
             <p className="mt-6 max-w-lg text-lg leading-relaxed text-mist-400">
               LÉO répond à vos voyageurs sur WhatsApp en moins de 30 secondes,
               24h/24 — sur chacun de vos logements, avec les bonnes
-              informations, jamais les mauvaises.
+              informations.
             </p>
             <div className="mt-9 flex flex-wrap items-center gap-4">
               <a
