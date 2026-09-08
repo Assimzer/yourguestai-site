@@ -26,7 +26,7 @@ const nextConfig = {
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: https:",
       "font-src 'self' data:",
-      `connect-src 'self' ${process.env.NEXT_PUBLIC_SUPABASE_URL || ""} https://api-adresse.data.gouv.fr https://cloud.umami.is`,
+      `connect-src 'self' ${process.env.NEXT_PUBLIC_SUPABASE_URL || ""} https://api-adresse.data.gouv.fr https://cloud.umami.is https://gateway.umami.is`,
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",
