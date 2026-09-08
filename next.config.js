@@ -17,8 +17,8 @@ const nextConfig = {
     // Jamais necessaire ni ajoute en production.
     const isDev = process.env.NODE_ENV !== "production";
     const scriptSrc = isDev
-      ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
-      : "script-src 'self' 'unsafe-inline'";
+      ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cloud.umami.is"
+      : "script-src 'self' 'unsafe-inline' https://cloud.umami.is";
 
     const csp = [
       "default-src 'self'",
@@ -26,7 +26,7 @@ const nextConfig = {
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: https:",
       "font-src 'self' data:",
-      `connect-src 'self' ${process.env.NEXT_PUBLIC_SUPABASE_URL || ""} https://api-adresse.data.gouv.fr`,
+      `connect-src 'self' ${process.env.NEXT_PUBLIC_SUPABASE_URL || ""} https://api-adresse.data.gouv.fr https://cloud.umami.is`,
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",
