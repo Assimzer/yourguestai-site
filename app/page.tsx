@@ -1,7 +1,13 @@
-import Link from "next/link";
 import PhoneMock from "./components/PhoneMock";
 import DemoForm from "./components/DemoForm";
-import PricingSection from "./components/PricingSection";
+import PricingCalculator from "./components/PricingCalculator";
+import SiteHeader from "./components/SiteHeader";
+import SiteFooter from "./components/SiteFooter";
+import SubNav from "./components/SubNav";
+import AnimatedGradientText from "./components/AnimatedGradientText";
+import RatingCard from "./components/RatingCard";
+import HubSpokeDiagram from "./components/HubSpokeDiagram";
+import FloatingWhatsAppButton from "./components/FloatingWhatsAppButton";
 
 const problems = [
   {
@@ -44,38 +50,24 @@ const faqs = [
 export default function Home() {
   return (
     <main>
-      {/* HEADER */}
-      <div className="border-b border-night-800">
-        <div className="mx-auto flex max-w-6xl items-center justify-end gap-3 px-6 py-4">
-          <Link
-            href="/login"
-            className="rounded-lg bg-porch-500 px-4 py-2 text-sm font-semibold text-night-950 transition hover:bg-porch-400"
-          >
-            Espace hôte
-          </Link>
-          <Link
-            href="/signup"
-            className="rounded-lg bg-night-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-night-600"
-          >
-            Inscription
-          </Link>
-        </div>
-      </div>
+      <SiteHeader />
+      <SubNav />
 
       {/* HERO */}
-      <section className="relative overflow-hidden border-b border-night-800">
+      <section id="hero" className="relative overflow-hidden border-b border-night-800">
         <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-16 px-6 py-24 lg:grid-cols-2 lg:py-32">
           <div>
             <p className="mb-5 font-mono text-xs uppercase tracking-[0.2em] text-porch-500">
               Concierge WhatsApp — LÉO
             </p>
             <h1 className="text-balance font-display text-4xl italic leading-[1.1] text-white sm:text-5xl lg:text-6xl">
-              Votre concierge qui ne s&apos;endort jamais.
+              Votre concierge qui{" "}
+              <AnimatedGradientText>ne s&apos;endort jamais</AnimatedGradientText>.
             </h1>
             <p className="mt-6 max-w-lg text-lg leading-relaxed text-mist-400">
               LÉO répond à vos voyageurs sur WhatsApp en moins de 30 secondes,
               24h/24 — sur chacun de vos logements, avec les bonnes
-              informations, jamais les mauvaises.
+              informations.
             </p>
             <div className="mt-9 flex flex-wrap items-center gap-4">
               <a
@@ -115,6 +107,41 @@ export default function Home() {
         </div>
       </section>
 
+      {/* AUTOMATISATIONS DES PLATEFORMES */}
+      <section className="border-b border-night-800">
+        <div className="mx-auto max-w-4xl px-6 py-20 text-center">
+          <div className="flex items-center justify-center gap-3">
+            <span className="rounded-full border border-night-600 bg-night-900 px-4 py-1.5 text-sm text-white">
+              Airbnb · Booking
+            </span>
+            <span className="font-mono text-xs uppercase tracking-[0.2em] text-mist-500">
+              vs
+            </span>
+            <span className="rounded-full border border-night-600 bg-night-900 px-4 py-1.5 text-sm text-white">
+              WhatsApp
+            </span>
+          </div>
+
+          <h2 className="mt-8 text-balance font-display text-3xl italic leading-tight text-white sm:text-4xl">
+            Les plateformes savent envoyer un message.{" "}
+            <span className="text-porch-400">
+              Elles ne savent pas répondre à votre voyageur.
+            </span>
+          </h2>
+
+          <p className="mx-auto mt-6 max-w-xl text-sm leading-relaxed text-mist-400">
+            Vous programmez une réponse automatique sur Airbnb déclenchée par
+            le mot « wifi ». Mais à 23h41, votre voyageuse écrit sur WhatsApp
+            : <em>« Le chauffage ne s&apos;allume pas, il fait 8°C dans le
+            salon, je fais quoi ? »</em> — un modèle de message ne sait pas
+            répondre à ça. LÉO, lui, comprend la question, va chercher la
+            consigne exacte de votre logement, et répond en quelques
+            secondes. Si le problème dépasse ce qu&apos;il peut résoudre, il
+            vous escalade l&apos;alerte immédiatement.
+          </p>
+        </div>
+      </section>
+
       {/* HOW IT WORKS */}
       <section id="comment-ca-marche" className="border-b border-night-800">
         <div className="mx-auto max-w-6xl px-6 py-20">
@@ -141,131 +168,54 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CE QUE LÉO FAIT VRAIMENT */}
-      <section className="border-b border-night-800 bg-night-900/40">
-        <div className="mx-auto max-w-6xl px-6 py-20">
-          <p className="mb-3 font-mono text-xs uppercase tracking-[0.2em] text-porch-500">
-            Fonctionnalités
+      {/* HUB AND SPOKE */}
+      <section id="hub" className="border-b border-night-800 bg-night-900/40">
+        <div className="mx-auto max-w-6xl px-6 py-20 text-center">
+          <p className="font-mono text-xs uppercase tracking-[0.2em] text-porch-500">
+            Un seul numéro
           </p>
-          <h2 className="max-w-xl font-display text-3xl italic text-white">
-            Ce que LÉO fait vraiment, aujourd&apos;hui.
+          <h2 className="mx-auto mt-3 max-w-xl text-balance font-display text-3xl italic text-white">
+            Tous vos voyageurs, tous vos logements, une seule IA.
           </h2>
+          <p className="mx-auto mt-4 max-w-lg text-sm leading-relaxed text-mist-400">
+            LÉO reçoit chaque message sur le même numéro WhatsApp et sait
+            exactement à quel voyageur et quel logement il répond — jamais
+            d&apos;informations mélangées.
+          </p>
 
-          <div className="mt-12 grid gap-6 md:grid-cols-3">
-            <FeatureCard
-              icon="⚡"
-              title="Réponse en moins de 30 secondes"
-              text="24h/24, sur WhatsApp — le voyageur a sa réponse avant même de reposer son téléphone."
-            />
-            <FeatureCard
-              icon="🗺️"
-              title="Des activités à réserver, sans quitter la conversation"
-              text="LÉO recommande des activités locales et propose la réservation en ligne directement dans l'échange (intégration GetYourGuide)."
-            />
-            <FeatureCard
-              icon="🚨"
-              title="Les vraies urgences remontent, le reste non"
-              text="Panne, dégât, problème sérieux : vous êtes alerté immédiatement. Pour le Wi-Fi ou le code du portail, LÉO gère seul — vous n'êtes pas dérangé."
-            />
+          <div className="mt-14">
+            <HubSpokeDiagram />
           </div>
-        </div>
-      </section>
 
-      {/* TABLEAU DE BORD */}
-      <section className="border-b border-night-800">
-        <div className="mx-auto max-w-6xl px-6 py-20">
-          <div className="grid gap-12 lg:grid-cols-[1fr,1fr] lg:items-center">
-            <div>
-              <p className="mb-3 font-mono text-xs uppercase tracking-[0.2em] text-porch-500">
-                Inclus avec LÉO
-              </p>
-              <h2 className="font-display text-3xl italic text-white">
-                Un tableau de bord qui vous dit ce qui se passe vraiment.
-              </h2>
-              <p className="mt-4 text-sm leading-relaxed text-mist-400">
-                Messages traités par logement, escalades vers vous,
-                conversations en cours ou terminées — tout est visible en un
-                coup d&apos;œil, sans avoir à rouvrir WhatsApp.
-              </p>
-
-              <div className="mt-8 grid gap-5 sm:grid-cols-2">
-                <Feature
-                  icon="📊"
-                  title="Statistiques par logement"
-                  text="Combien de messages, combien d'escalades, sur quelle période."
-                />
-                <Feature
-                  icon="🔔"
-                  title="Escalades tracées"
-                  text="Chaque alerte envoyée au propriétaire reste visible et datée."
-                />
-                <Feature
-                  icon="🗂️"
-                  title="Statut de chaque conversation"
-                  text="En cours, à venir, terminée — au fil des réservations."
-                />
-                <Feature
-                  icon="🔍"
-                  title="Filtres par date et par logement"
-                  text="Retrouvez un échange précis en quelques secondes."
-                />
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-night-600 bg-night-900 p-1">
-              <div className="rounded-xl bg-night-800 px-5 py-5">
-                <div className="flex items-baseline justify-between">
-                  <p className="text-xs text-mist-400">Activité LÉO — 14 derniers jours</p>
-                  <span className="text-xs text-ok">+18% vs période précédente</span>
-                </div>
-                <p className="mt-1 font-display text-3xl text-white">142</p>
-
-                <div className="mt-5 flex items-end gap-1.5" aria-hidden>
-                  {[40, 55, 35, 70, 50, 85, 60, 45, 90, 65, 75, 55].map((h, i) => (
-                    <div
-                      key={i}
-                      className="flex-1 rounded-t bg-porch-500/70"
-                      style={{ height: `${h}px` }}
-                    />
-                  ))}
-                </div>
-
-                <div className="mt-6 flex flex-col gap-2 border-t border-night-700 pt-4">
-                  <div className="flex items-center justify-between rounded-lg bg-night-700 px-3 py-2 text-xs">
-                    <span className="text-white">Appartement Le Marais</span>
-                    <span className="rounded-full bg-ok/20 px-2 py-0.5 text-[11px] font-medium text-ok">
-                      En cours
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between rounded-lg bg-night-700 px-3 py-2 text-xs">
-                    <span className="text-white">Studio Vieux-Port</span>
-                    <span className="rounded-full bg-warn/20 px-2 py-0.5 text-[11px] font-medium text-warn">
-                      Escaladé
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <div className="mt-14">
+            <RatingCard />
           </div>
         </div>
       </section>
 
       {/* TARIFS */}
-      <section className="border-b border-night-800 bg-night-900/40">
-        <div className="mx-auto max-w-6xl px-6 py-20">
-          <h2 className="font-display text-3xl italic text-white">
-            Un tarif qui baisse avec votre portefeuille.
+      <section id="tarifs" className="border-b border-night-800 bg-night-900/40">
+        <div className="mx-auto max-w-2xl px-6 py-20">
+          <p className="text-center font-mono text-xs uppercase tracking-[0.2em] text-porch-500">
+            Tarifs
+          </p>
+          <h2 className="mt-3 text-center font-display text-3xl italic text-white">
+            Plus vous gérez de logements, moins vous payez.
           </h2>
-          <p className="mt-3 max-w-md text-sm text-mist-400">
-            Sans engagement. Aucun frais de mise en service. Essai gratuit 14
+          <p className="mx-auto mt-3 max-w-md text-center text-sm text-mist-400">
+            Un seul plan, toutes les fonctionnalités incluses. Sans
+            engagement. Aucun frais de mise en service. Essai gratuit 14
             jours.
           </p>
-          <PricingSection />
+
+          <div className="mt-10">
+            <PricingCalculator />
+          </div>
         </div>
       </section>
 
       {/* FAQ */}
-      <section className="border-b border-night-800">
+      <section id="faq" className="border-b border-night-800">
         <div className="mx-auto max-w-2xl px-6 py-20">
           <p className="text-center font-mono text-xs uppercase tracking-[0.2em] text-porch-500">
             Questions fréquentes
@@ -310,52 +260,9 @@ export default function Home() {
         </div>
       </section>
 
-      <footer className="border-t border-night-800 px-6 py-10 text-center text-xs text-mist-500">
-        <p>YOURGUESTAI — LÉO</p>
-        <Link href="/login" className="mt-2 inline-block hover:text-mist-300">
-          Espace hôte
-        </Link>
-        <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
-          <Link href="/mentions-legales" className="hover:text-mist-300">
-            Mentions légales
-          </Link>
-          <Link href="/cgu-cgv" className="hover:text-mist-300">
-            CGU/CGV
-          </Link>
-          <Link href="/politique-confidentialite" className="hover:text-mist-300">
-            Politique de confidentialité
-          </Link>
-        </div>
-      </footer>
+      <SiteFooter />
+      <FloatingWhatsAppButton />
     </main>
-  );
-}
-
-function FeatureCard({
-  icon,
-  title,
-  text,
-}: {
-  icon: string;
-  title: string;
-  text: string;
-}) {
-  return (
-    <div className="rounded-2xl border border-night-600 bg-night-900 p-6 transition hover:border-porch-500/40">
-      <p className="text-2xl">{icon}</p>
-      <p className="mt-4 font-display text-lg text-white">{title}</p>
-      <p className="mt-2 text-sm leading-relaxed text-mist-400">{text}</p>
-    </div>
-  );
-}
-
-function Feature({ icon, title, text }: { icon: string; title: string; text: string }) {
-  return (
-    <div>
-      <p className="text-lg">{icon}</p>
-      <p className="mt-1 text-sm font-semibold text-white">{title}</p>
-      <p className="mt-0.5 text-xs leading-relaxed text-mist-500">{text}</p>
-    </div>
   );
 }
 

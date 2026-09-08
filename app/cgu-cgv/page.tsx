@@ -1,4 +1,5 @@
 import Link from "next/link";
+import LegalPageNav from "../components/LegalPageNav";
 
 export default function CguCgvPage() {
   return (
@@ -79,6 +80,8 @@ export default function CguCgvPage() {
 
         <p className="text-xs text-mist-500">Contact : yourguestai@gmail.com</p>
       </div>
+
+      <LegalPageNav current="/cgu-cgv" />
     </main>
   );
 }
