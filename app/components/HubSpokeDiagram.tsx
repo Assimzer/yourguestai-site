@@ -53,12 +53,18 @@ const CENTER = { x: 50, y: 48 };
 function curvePath(from: { x: number; y: number }, to: { x: number; y: number }) {
   const midX = (from.x + to.x) / 2;
   const midY = (from.y + to.y) / 2;
-  // Léger décalage perpendiculaire pour une courbe naturelle plutôt qu'une ligne droite.
+  // Décalage perpendiculaire toujours dans le même sens de rotation
+  // (comme les pales d'une hélice) : chaque ligne s'écarte proprement de
+  // son propre côté au lieu de se superposer aux autres en formant un X
+  // au niveau du logo central.
   const dx = to.x - from.x;
   const dy = to.y - from.y;
-  const curveOffset = 8;
-  const ctrlX = midX + (dy > 0 ? 1 : -1) * curveOffset * Math.sign(dx || 1);
-  const ctrlY = midY - (dx > 0 ? 1 : -1) * curveOffset * Math.sign(dy || 1);
+  const length = Math.hypot(dx, dy) || 1;
+  const curveOffset = 6;
+  const perpX = -dy / length;
+  const perpY = dx / length;
+  const ctrlX = midX + perpX * curveOffset;
+  const ctrlY = midY + perpY * curveOffset;
   return `M ${from.x} ${from.y} Q ${ctrlX} ${ctrlY} ${to.x} ${to.y}`;
 }
 

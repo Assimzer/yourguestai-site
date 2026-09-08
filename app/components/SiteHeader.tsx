@@ -4,8 +4,8 @@ import LanguageSelector from "./LanguageSelector";
 
 export default function SiteHeader() {
   return (
-    <div className="sticky top-4 z-50 mx-auto w-fit max-w-[calc(100%-2rem)] px-4">
-      <nav className="relative flex items-center gap-6 rounded-full border border-night-700/60 bg-night-950/90 px-6 py-3 shadow-lg backdrop-blur-md">
+    <div className="sticky top-0 z-50 h-16 border-b border-night-800 bg-night-950/95 backdrop-blur-md">
+      <nav className="relative mx-auto flex h-16 max-w-6xl items-center gap-6 px-6">
         <Link href="/" className="font-display text-base italic text-white">
           YOURGUESTAI
         </Link>
@@ -22,7 +22,7 @@ export default function SiteHeader() {
         </div>
         <MobileMenuButton />
         <LanguageSelector />
-        <div className="flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-2">
           <Link
             href="/login"
             className="rounded-full bg-porch-500 px-4 py-1.5 text-sm font-semibold text-night-950 transition hover:bg-porch-400"
