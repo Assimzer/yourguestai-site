@@ -4,35 +4,33 @@ import { useEffect, useState } from "react";
 
 const EXAMPLES = [
   {
-    label: "Rapidité de réponse",
-    score: 5,
-    text: "LÉO répond à vos voyageurs sur WhatsApp en moins de 30 secondes, 24h/24.",
+    label: "Sans assistance automatisée",
+    score: 3,
+    color: "#E8735A", // rouge (warn)
+    text: "Vous répondez vous-même à chaque message, à toute heure, sur tous vos logements.",
   },
   {
-    label: "Simplicité de mise en route",
-    score: 5,
-    text: "Connectez votre calendrier et remplissez le livret d'accueil en quelques minutes, sans code.",
+    label: "Avec un chatbot classique",
+    score: 4,
+    color: "#E8A33D", // orange (porch)
+    text: "Des réponses automatiques limitées à quelques mots-clés, sans comprendre les vraies questions.",
   },
   {
-    label: "Précision par logement",
+    label: "Avec LÉO",
     score: 5,
-    text: "Chaque voyageur reçoit les informations de son propre logement — jamais mélangées avec un autre.",
+    color: "#5FC98D", // vert (ok)
+    text: "Une IA qui comprend chaque question et répond en moins de 30 secondes, 24h/24.",
   },
 ];
 
 const ROTATE_MS = 2000;
 
-function Star({ filled }: { filled: boolean }) {
+function Star({ filled, color }: { filled: boolean; color: string }) {
   return (
-    <svg
-      width="28"
-      height="28"
-      viewBox="0 0 24 24"
-      className={filled ? "text-porch-500" : "text-night-700"}
-    >
+    <svg width="28" height="28" viewBox="0 0 24 24" className="text-night-700">
       <path
         d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.5 6.8L12 16.9 5.8 20.4l1.5-6.8-5.1-4.6 6.9-.7L12 2z"
-        fill="currentColor"
+        fill={filled ? color : "currentColor"}
       />
     </svg>
   );
@@ -51,7 +49,7 @@ export default function RatingCard() {
   const current = EXAMPLES[index];
 
   return (
-    <div className="mx-auto max-w-sm rounded-2xl border border-night-600 bg-night-900 p-8 text-center">
+    <div className="mx-auto flex w-full max-w-sm flex-col items-center justify-center rounded-2xl border border-night-600 bg-night-900 p-8 text-center" style={{ minHeight: 320 }}>
       <p
         key={`label-${index}`}
         className="animate-[ygFadeIn_0.4s_ease-out] font-mono text-xs uppercase tracking-[0.2em] text-mist-500"
@@ -64,13 +62,14 @@ export default function RatingCard() {
         className="mt-4 flex animate-[ygFadeIn_0.4s_ease-out] items-center justify-center gap-1"
       >
         {Array.from({ length: 5 }).map((_, i) => (
-          <Star key={i} filled={i < current.score} />
+          <Star key={i} filled={i < current.score} color={current.color} />
         ))}
       </div>
 
       <p
         key={`score-${index}`}
-        className="mt-4 animate-[ygFadeIn_0.4s_ease-out] font-display text-5xl text-white"
+        className="mt-4 animate-[ygFadeIn_0.4s_ease-out] font-display text-5xl"
+        style={{ color: current.color }}
       >
         {current.score}
         <span className="text-2xl text-mist-500">/5</span>
@@ -78,7 +77,7 @@ export default function RatingCard() {
 
       <p
         key={`text-${index}`}
-        className="mt-2 animate-[ygFadeIn_0.4s_ease-out] text-sm leading-relaxed text-mist-400"
+        className="mt-2 flex min-h-[3.5rem] animate-[ygFadeIn_0.4s_ease-out] items-center text-sm leading-relaxed text-mist-400"
       >
         {current.text}
       </p>
@@ -87,9 +86,10 @@ export default function RatingCard() {
         {EXAMPLES.map((_, i) => (
           <span
             key={i}
-            className={`h-1.5 w-1.5 rounded-full transition ${
-              i === index ? "bg-porch-500" : "bg-night-700"
-            }`}
+            className="h-1.5 w-1.5 rounded-full transition"
+            style={{
+              backgroundColor: i === index ? current.color : "#2A3554",
+            }}
           />
         ))}
       </div>
