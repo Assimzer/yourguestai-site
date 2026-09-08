@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 export default function SignupPage() {
   const supabase = createClient();
+  const router = useRouter();
   const [nomComplet, setNomComplet] = useState("");
   const [email, setEmail] = useState("");
   const [telephone, setTelephone] = useState("");
@@ -44,7 +46,17 @@ export default function SignupPage() {
     // La ligne "hosts" correspondante est créée automatiquement par un
     // trigger Postgres (voir README) au moment de la création du user
     // Supabase Auth — rien à faire ici côté client.
-    void data;
+
+    // Si la confirmation d'email est désactivée côté Supabase, signUp()
+    // renvoie directement une session active : le compte est déjà
+    // connecté, il ne faut pas afficher le message "vérifiez votre
+    // email" (qui ferait croire à tort que le compte n'est pas encore
+    // utilisable) mais emmener l'hôte dans son tableau de bord.
+    if (data.session) {
+      router.push("/dashboard");
+      return;
+    }
+
     setStatus("sent");
   }
 
