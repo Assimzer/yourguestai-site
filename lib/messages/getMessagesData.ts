@@ -171,7 +171,22 @@ export async function getMessagesData(
     };
   }
 
-  const data = await n8nRes.json();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let data: { messages?: any[] };
+  try {
+    data = await n8nRes.json();
+  } catch {
+    // Réponse n8n vide ou non-JSON : on ne fait pas planter la page, on
+    // affiche juste une liste vide de messages pour cette fois.
+    return {
+      ok: true,
+      messages: [],
+      by_logement: [],
+      daily: [],
+      previous_period_message_count: 0,
+      recent_escalades: [],
+    };
+  }
 
   // Reservations necessaires pour deduire le statut (EN_COURS/PROCHAIN/PASSE)
   // de chaque conversation. Absence de reponse ou d'URL configuree =>

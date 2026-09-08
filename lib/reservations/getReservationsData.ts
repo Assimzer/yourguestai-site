@@ -66,7 +66,15 @@ export async function getReservationsData(
     };
   }
 
-  const data = await n8nRes.json();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let data: { reservations?: any[] };
+  try {
+    data = await n8nRes.json();
+  } catch {
+    // Réponse n8n vide ou non-JSON : on ne fait pas planter la page, on
+    // affiche juste une liste vide de réservations pour cette fois.
+    return { ok: true, reservations: [] };
+  }
 
   // Ré-associe chaque réservation à l'id Supabase du logement (nécessaire
   // pour les vérifications d'ownership des routes update-name / generate-code).
