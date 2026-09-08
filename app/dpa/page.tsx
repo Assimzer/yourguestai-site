@@ -27,8 +27,8 @@ export default function DpaPage() {
           Accord sur le traitement des données personnelles au titre de
           l&apos;article 28 du Règlement (UE) 2016/679 (RGPD), entre le
           client de YOURGUESTAI (« Responsable du traitement ») et
-          YOURGUESTAI, nom commercial d&apos;Indépendance Musicale
-          (entrepreneur individuel, SIRET 904 465 325 00010) (« Sous-traitant »).
+          YOURGUESTAI (entrepreneur individuel, SIRET 904 465 325 00010)
+          (« Sous-traitant »).
         </p>
 
         <section>
