@@ -19,7 +19,7 @@ const bubbles: Bubble[] = [
     name: "Camille",
     avatar: "C",
     text: "Le wifi ne marche pas…",
-    x: 8,
+    x: 18,
     y: 12,
   },
   {
@@ -27,7 +27,7 @@ const bubbles: Bubble[] = [
     name: "Marc",
     avatar: "M",
     text: "On arrive à quelle heure ?",
-    x: 92,
+    x: 82,
     y: 15,
   },
   {
@@ -35,7 +35,7 @@ const bubbles: Bubble[] = [
     name: "Élise",
     avatar: "É",
     text: "Où puis-je me garer ?",
-    x: 6,
+    x: 16,
     y: 82,
   },
   {
@@ -43,7 +43,7 @@ const bubbles: Bubble[] = [
     name: "Thomas",
     avatar: "T",
     text: "Fuite d'eau, aide !",
-    x: 94,
+    x: 84,
     y: 85,
   },
 ];
@@ -75,7 +75,7 @@ export default function HubSpokeDiagram() {
   return (
     <div
       ref={ref}
-      className="relative mx-auto aspect-[16/10] w-full max-w-2xl"
+      className="relative mx-auto aspect-[16/10] w-full max-w-2xl overflow-hidden"
     >
       <svg
         viewBox="0 0 100 100"
@@ -114,7 +114,7 @@ export default function HubSpokeDiagram() {
       {bubbles.map((b, i) => (
         <motion.div
           key={b.id}
-          className="absolute w-36 -translate-x-1/2 -translate-y-1/2 rounded-xl border border-night-600 bg-night-900 p-2.5 shadow-lg sm:w-44"
+          className="absolute w-24 -translate-x-1/2 -translate-y-1/2 rounded-xl border border-night-600 bg-night-900 p-1.5 shadow-lg sm:w-36 sm:p-2.5 md:w-44"
           style={{ left: `${b.x}%`, top: `${b.y}%` }}
           initial={{ opacity: 0, scale: 0.8 }}
           animate={inView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
