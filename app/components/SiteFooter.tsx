@@ -5,9 +5,6 @@ export default function SiteFooter() {
   return (
     <footer className="border-t border-night-800 px-6 py-10 text-center text-xs text-mist-500">
       <p>YOURGUESTAI — LÉO</p>
-      <Link href="/login" className="mt-2 inline-block hover:text-mist-300">
-        Espace hôte
-      </Link>
       <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
         <Link href="/a-propos" className="hover:text-mist-300">
           À propos
