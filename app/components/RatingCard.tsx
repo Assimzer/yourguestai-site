@@ -2,28 +2,33 @@
 
 import { useEffect, useState } from "react";
 
+const ARGUMENT = {
+  label: "Avis en danger",
+  text: "Une réponse lente ou une info erronée = avis négatif qui pèse sur la note pendant des mois.",
+};
+
 const EXAMPLES = [
   {
-    label: "Sans assistance automatisée",
+    label: ARGUMENT.label,
     score: 3,
     color: "#E8735A", // rouge (warn)
-    text: "Vous répondez vous-même à chaque message, à toute heure, sur tous vos logements.",
+    text: ARGUMENT.text,
   },
   {
-    label: "Avec un chatbot classique",
+    label: ARGUMENT.label,
     score: 4,
     color: "#E8A33D", // orange (porch)
-    text: "Des réponses automatiques limitées à quelques mots-clés, sans comprendre les vraies questions.",
+    text: ARGUMENT.text,
   },
   {
-    label: "Avec LÉO",
+    label: ARGUMENT.label,
     score: 5,
     color: "#5FC98D", // vert (ok)
-    text: "Une IA qui comprend chaque question et répond en moins de 30 secondes, 24h/24.",
+    text: ARGUMENT.text,
   },
 ];
 
-const ROTATE_MS = 2000;
+const ROTATE_MS = 3000;
 
 function Star({ filled, color }: { filled: boolean; color: string }) {
   return (
