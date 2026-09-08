@@ -22,7 +22,7 @@ export default function MentionsLegalesPage() {
         <section>
           <h2 className="font-display text-lg text-white">Édition du site</h2>
           <ul className="mt-2 space-y-1">
-            <li>Nom commercial : YOURGUESTAI (Indépendance Musicale)</li>
+            <li>Nom commercial : YOURGUESTAI</li>
             <li>Statut : entrepreneur individuel (auto-entrepreneur)</li>
             <li>Responsable : Assim</li>
             <li>SIRET : 904 465 325 00010</li>
@@ -34,9 +34,9 @@ export default function MentionsLegalesPage() {
         <section>
           <h2 className="font-display text-lg text-white">Hébergement</h2>
           <ul className="mt-2 space-y-1">
-            <li>Société : Vercel Inc.</li>
-            <li>Adresse : 340 S Lemon Ave #4133, Walnut, CA 91789, États-Unis</li>
-            <li>Contact : privacy@vercel.com</li>
+            <li>Société : OVH SAS</li>
+            <li>Adresse : 2 rue Kellermann, 59100 Roubaix, France</li>
+            <li>Contact : https://www.ovhcloud.com/fr/contact/</li>
           </ul>
         </section>
 
