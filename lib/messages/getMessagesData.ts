@@ -190,27 +190,35 @@ export async function getMessagesData(
     properties.map((p) => [normalize(p.cle_unique_airtable), p])
   );
 
-  const rawMessages = (data.messages ?? []).map(
-    (m: {
-      id: string;
-      id_logement: string;
-      telephone?: string;
-      date?: string;
-      sens?: string;
-      escalade?: boolean;
-    }) => {
-      const property = byIdLogement.get(normalize(m.id_logement));
-      return {
-        id: m.id,
-        logement: property?.nom ?? m.id_logement,
-        property_id: property?.id ?? "",
-        telephone: m.telephone ?? "",
-        date: m.date ?? "",
-        sens: m.sens ?? "",
-        escalade: Boolean(m.escalade),
-      };
-    }
-  );
+  // Sécurité : on ne fait pas confiance au filtrage de n8n. Même si
+  // id_logements a été envoyé, on ne garde ici que les messages dont le
+  // logement appartient réellement à cet hôte — sinon un filtre cassé ou
+  // absent côté n8n exposerait les messages d'autres hôtes.
+  const rawMessages = (data.messages ?? [])
+    .filter((m: { id_logement: string }) =>
+      byIdLogement.has(normalize(m.id_logement))
+    )
+    .map(
+      (m: {
+        id: string;
+        id_logement: string;
+        telephone?: string;
+        date?: string;
+        sens?: string;
+        escalade?: boolean;
+      }) => {
+        const property = byIdLogement.get(normalize(m.id_logement))!;
+        return {
+          id: m.id,
+          logement: property.nom,
+          property_id: property.id,
+          telephone: m.telephone ?? "",
+          date: m.date ?? "",
+          sens: m.sens ?? "",
+          escalade: Boolean(m.escalade),
+        };
+      }
+    );
 
   // Reservations : re-associe id_logement (Airtable) -> nom du logement
   // (Supabase), pour matcher sur le meme libelle que les messages.
