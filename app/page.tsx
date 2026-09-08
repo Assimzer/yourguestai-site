@@ -1,6 +1,6 @@
 import PhoneMock from "./components/PhoneMock";
 import DemoForm from "./components/DemoForm";
-import PricingSection from "./components/PricingSection";
+import PricingCalculator from "./components/PricingCalculator";
 import SiteHeader from "./components/SiteHeader";
 import SiteFooter from "./components/SiteFooter";
 
@@ -272,15 +272,22 @@ export default function Home() {
 
       {/* TARIFS */}
       <section className="border-b border-night-800 bg-night-900/40">
-        <div className="mx-auto max-w-6xl px-6 py-20">
-          <h2 className="font-display text-3xl italic text-white">
-            Un tarif qui baisse avec votre portefeuille.
+        <div className="mx-auto max-w-2xl px-6 py-20">
+          <p className="text-center font-mono text-xs uppercase tracking-[0.2em] text-porch-500">
+            Tarifs
+          </p>
+          <h2 className="mt-3 text-center font-display text-3xl italic text-white">
+            Plus vous gérez de logements, moins vous payez.
           </h2>
-          <p className="mt-3 max-w-md text-sm text-mist-400">
-            Sans engagement. Aucun frais de mise en service. Essai gratuit 14
+          <p className="mx-auto mt-3 max-w-md text-center text-sm text-mist-400">
+            Un seul plan, toutes les fonctionnalités incluses. Sans
+            engagement. Aucun frais de mise en service. Essai gratuit 14
             jours.
           </p>
-          <PricingSection />
+
+          <div className="mt-10">
+            <PricingCalculator />
+          </div>
         </div>
       </section>
 

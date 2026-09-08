@@ -1,9 +1,10 @@
 import Link from "next/link";
+import MobileMenuButton from "./MobileMenuButton";
 
 export default function SiteHeader() {
   return (
     <div className="sticky top-4 z-50 mx-auto w-fit max-w-[calc(100%-2rem)] px-4">
-      <nav className="flex items-center gap-6 rounded-full border border-night-700/60 bg-night-900/70 px-6 py-3 shadow-lg backdrop-blur-md">
+      <nav className="relative flex items-center gap-6 rounded-full border border-night-700/60 bg-night-900/70 px-6 py-3 shadow-lg backdrop-blur-md">
         <Link href="/" className="font-display text-base italic text-white">
           YOURGUESTAI
         </Link>
@@ -18,6 +19,7 @@ export default function SiteHeader() {
             Démo
           </Link>
         </div>
+        <MobileMenuButton />
         <div className="flex items-center gap-2">
           <Link
             href="/login"
