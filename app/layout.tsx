@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Fraunces, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import CookieConsent from "./components/CookieConsent";
 
 const display = Fraunces({
   subsets: ["latin"],
@@ -56,6 +57,7 @@ export default function RootLayout({
     <html lang="fr" className={`${display.variable} ${body.variable} ${mono.variable}`}>
       <body className="bg-night-950 text-mist-300 font-body antialiased">
         {children}
+        <CookieConsent />
       </body>
     </html>
   );

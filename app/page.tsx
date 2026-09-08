@@ -1,7 +1,8 @@
-import Link from "next/link";
 import PhoneMock from "./components/PhoneMock";
 import DemoForm from "./components/DemoForm";
 import PricingSection from "./components/PricingSection";
+import SiteHeader from "./components/SiteHeader";
+import SiteFooter from "./components/SiteFooter";
 
 const problems = [
   {
@@ -44,23 +45,7 @@ const faqs = [
 export default function Home() {
   return (
     <main>
-      {/* HEADER */}
-      <div className="border-b border-night-800">
-        <div className="mx-auto flex max-w-6xl items-center justify-end gap-3 px-6 py-4">
-          <Link
-            href="/login"
-            className="rounded-lg bg-porch-500 px-4 py-2 text-sm font-semibold text-night-950 transition hover:bg-porch-400"
-          >
-            Espace hôte
-          </Link>
-          <Link
-            href="/signup"
-            className="rounded-lg bg-night-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-night-600"
-          >
-            Inscription
-          </Link>
-        </div>
-      </div>
+      <SiteHeader />
 
       {/* HERO */}
       <section className="relative overflow-hidden border-b border-night-800">
@@ -115,6 +100,41 @@ export default function Home() {
         </div>
       </section>
 
+      {/* AUTOMATISATIONS DES PLATEFORMES */}
+      <section className="border-b border-night-800">
+        <div className="mx-auto max-w-4xl px-6 py-20 text-center">
+          <div className="flex items-center justify-center gap-3">
+            <span className="rounded-full border border-night-600 bg-night-900 px-4 py-1.5 text-sm text-white">
+              Airbnb · Booking
+            </span>
+            <span className="font-mono text-xs uppercase tracking-[0.2em] text-mist-500">
+              vs
+            </span>
+            <span className="rounded-full border border-night-600 bg-night-900 px-4 py-1.5 text-sm text-white">
+              WhatsApp
+            </span>
+          </div>
+
+          <h2 className="mt-8 text-balance font-display text-3xl italic leading-tight text-white sm:text-4xl">
+            Les plateformes savent envoyer un message.{" "}
+            <span className="text-porch-400">
+              Elles ne savent pas répondre à votre voyageur.
+            </span>
+          </h2>
+
+          <p className="mx-auto mt-6 max-w-xl text-sm leading-relaxed text-mist-400">
+            Vous programmez une réponse automatique sur Airbnb déclenchée par
+            le mot « wifi ». Mais à 23h41, votre voyageuse écrit sur WhatsApp
+            : <em>« Le chauffage ne s&apos;allume pas, il fait 8°C dans le
+            salon, je fais quoi ? »</em> — un modèle de message ne sait pas
+            répondre à ça. LÉO, lui, comprend la question, va chercher la
+            consigne exacte de votre logement, et répond en quelques
+            secondes. Si le problème dépasse ce qu&apos;il peut résoudre, il
+            vous escalade l&apos;alerte immédiatement.
+          </p>
+        </div>
+      </section>
+
       {/* HOW IT WORKS */}
       <section id="comment-ca-marche" className="border-b border-night-800">
         <div className="mx-auto max-w-6xl px-6 py-20">
@@ -142,7 +162,7 @@ export default function Home() {
       </section>
 
       {/* CE QUE LÉO FAIT VRAIMENT */}
-      <section className="border-b border-night-800 bg-night-900/40">
+      <section id="fonctionnalites" className="border-b border-night-800 bg-night-900/40">
         <div className="mx-auto max-w-6xl px-6 py-20">
           <p className="mb-3 font-mono text-xs uppercase tracking-[0.2em] text-porch-500">
             Fonctionnalités
@@ -310,23 +330,7 @@ export default function Home() {
         </div>
       </section>
 
-      <footer className="border-t border-night-800 px-6 py-10 text-center text-xs text-mist-500">
-        <p>YOURGUESTAI — LÉO</p>
-        <Link href="/login" className="mt-2 inline-block hover:text-mist-300">
-          Espace hôte
-        </Link>
-        <div className="mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
-          <Link href="/mentions-legales" className="hover:text-mist-300">
-            Mentions légales
-          </Link>
-          <Link href="/cgu-cgv" className="hover:text-mist-300">
-            CGU/CGV
-          </Link>
-          <Link href="/politique-confidentialite" className="hover:text-mist-300">
-            Politique de confidentialité
-          </Link>
-        </div>
-      </footer>
+      <SiteFooter />
     </main>
   );
 }

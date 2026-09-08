@@ -1,4 +1,5 @@
 import Link from "next/link";
+import LegalPageNav from "../components/LegalPageNav";
 
 export default function MentionsLegalesPage() {
   return (
@@ -59,6 +60,8 @@ export default function MentionsLegalesPage() {
           </p>
         </section>
       </div>
+
+      <LegalPageNav current="/mentions-legales" />
     </main>
   );
 }
