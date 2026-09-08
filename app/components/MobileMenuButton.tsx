@@ -23,7 +23,7 @@ export default function MobileMenuButton() {
         <div className="absolute left-1/2 top-[calc(100%+0.5rem)] w-56 -translate-x-1/2 rounded-2xl border border-night-700/60 bg-night-900/95 p-3 shadow-lg backdrop-blur-md">
           <nav className="flex flex-col gap-1 text-sm text-mist-300">
             <Link
-              href="/#fonctionnalites"
+              href="/fonctionnalites"
               onClick={() => setOpen(false)}
               className="rounded-lg px-3 py-2 hover:bg-night-800 hover:text-white"
             >

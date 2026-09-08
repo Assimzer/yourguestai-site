@@ -30,6 +30,21 @@ export default function PhoneMock() {
             <p className="self-start text-[10px] text-mist-500 mt-0.5 ml-1">
               Répondu en moins de 30 s
             </p>
+
+            <div className="self-end max-w-[85%] rounded-2xl rounded-tr-sm bg-night-600 px-3 py-2 text-[13px] text-white mt-2">
+              Le voisin fait beaucoup de bruit, vous pouvez faire qqch ?
+            </div>
+
+            <div
+              className="self-start max-w-[85%] rounded-2xl rounded-tl-sm bg-porch-500 px-3 py-2 text-[13px] text-night-950 animate-[fadeIn_0.6s_ease-out_0.6s_both]"
+            >
+              Je préviens le propriétaire tout de suite, il revient vers vous rapidement 🔔
+            </div>
+
+            <p className="self-start flex items-center gap-1 text-[10px] text-warn mt-0.5 ml-1">
+              <span className="h-1.5 w-1.5 rounded-full bg-warn" />
+              Escaladé au propriétaire
+            </p>
           </div>
         </div>
       </div>

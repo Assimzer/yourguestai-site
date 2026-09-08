@@ -4,12 +4,12 @@ import MobileMenuButton from "./MobileMenuButton";
 export default function SiteHeader() {
   return (
     <div className="sticky top-4 z-50 mx-auto w-fit max-w-[calc(100%-2rem)] px-4">
-      <nav className="relative flex items-center gap-6 rounded-full border border-night-700/60 bg-night-900/70 px-6 py-3 shadow-lg backdrop-blur-md">
+      <nav className="relative flex items-center gap-6 rounded-full border border-night-700/60 bg-night-950/90 px-6 py-3 shadow-lg backdrop-blur-md">
         <Link href="/" className="font-display text-base italic text-white">
           YOURGUESTAI
         </Link>
         <div className="hidden items-center gap-5 text-sm text-mist-400 sm:flex">
-          <Link href="/#fonctionnalites" className="hover:text-white">
+          <Link href="/fonctionnalites" className="hover:text-white">
             Fonctionnalités
           </Link>
           <Link href="/a-propos" className="hover:text-white">
