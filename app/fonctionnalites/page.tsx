@@ -1,6 +1,7 @@
 import Link from "next/link";
 import SiteHeader from "../components/SiteHeader";
 import SiteFooter from "../components/SiteFooter";
+import FloatingWhatsAppButton from "../components/FloatingWhatsAppButton";
 
 export default function FonctionnalitesPage() {
   return (
@@ -142,6 +143,7 @@ export default function FonctionnalitesPage() {
       </section>
 
       <SiteFooter />
+      <FloatingWhatsAppButton />
     </main>
   );
 }

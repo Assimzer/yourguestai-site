@@ -3,6 +3,11 @@ import DemoForm from "./components/DemoForm";
 import PricingCalculator from "./components/PricingCalculator";
 import SiteHeader from "./components/SiteHeader";
 import SiteFooter from "./components/SiteFooter";
+import SubNav from "./components/SubNav";
+import AnimatedGradientText from "./components/AnimatedGradientText";
+import RatingCard from "./components/RatingCard";
+import HubSpokeDiagram from "./components/HubSpokeDiagram";
+import FloatingWhatsAppButton from "./components/FloatingWhatsAppButton";
 
 const problems = [
   {
@@ -46,16 +51,18 @@ export default function Home() {
   return (
     <main>
       <SiteHeader />
+      <SubNav />
 
       {/* HERO */}
-      <section className="relative overflow-hidden border-b border-night-800">
+      <section id="hero" className="relative overflow-hidden border-b border-night-800">
         <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-16 px-6 py-24 lg:grid-cols-2 lg:py-32">
           <div>
             <p className="mb-5 font-mono text-xs uppercase tracking-[0.2em] text-porch-500">
               Concierge WhatsApp — LÉO
             </p>
             <h1 className="text-balance font-display text-4xl italic leading-[1.1] text-white sm:text-5xl lg:text-6xl">
-              Votre concierge qui ne s&apos;endort jamais.
+              Votre concierge qui{" "}
+              <AnimatedGradientText>ne s&apos;endort jamais</AnimatedGradientText>.
             </h1>
             <p className="mt-6 max-w-lg text-lg leading-relaxed text-mist-400">
               LÉO répond à vos voyageurs sur WhatsApp en moins de 30 secondes,
@@ -161,8 +168,33 @@ export default function Home() {
         </div>
       </section>
 
+      {/* HUB AND SPOKE */}
+      <section id="hub" className="border-b border-night-800 bg-night-900/40">
+        <div className="mx-auto max-w-6xl px-6 py-20 text-center">
+          <p className="font-mono text-xs uppercase tracking-[0.2em] text-porch-500">
+            Un seul numéro
+          </p>
+          <h2 className="mx-auto mt-3 max-w-xl text-balance font-display text-3xl italic text-white">
+            Tous vos voyageurs, tous vos logements, une seule IA.
+          </h2>
+          <p className="mx-auto mt-4 max-w-lg text-sm leading-relaxed text-mist-400">
+            LÉO reçoit chaque message sur le même numéro WhatsApp et sait
+            exactement à quel voyageur et quel logement il répond — jamais
+            d&apos;informations mélangées.
+          </p>
+
+          <div className="mt-14">
+            <HubSpokeDiagram />
+          </div>
+
+          <div className="mx-auto mt-14 max-w-sm">
+            <RatingCard />
+          </div>
+        </div>
+      </section>
+
       {/* TARIFS */}
-      <section className="border-b border-night-800 bg-night-900/40">
+      <section id="tarifs" className="border-b border-night-800 bg-night-900/40">
         <div className="mx-auto max-w-2xl px-6 py-20">
           <p className="text-center font-mono text-xs uppercase tracking-[0.2em] text-porch-500">
             Tarifs
@@ -183,7 +215,7 @@ export default function Home() {
       </section>
 
       {/* FAQ */}
-      <section className="border-b border-night-800">
+      <section id="faq" className="border-b border-night-800">
         <div className="mx-auto max-w-2xl px-6 py-20">
           <p className="text-center font-mono text-xs uppercase tracking-[0.2em] text-porch-500">
             Questions fréquentes
@@ -229,6 +261,7 @@ export default function Home() {
       </section>
 
       <SiteFooter />
+      <FloatingWhatsAppButton />
     </main>
   );
 }

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import MobileMenuButton from "./MobileMenuButton";
+import LanguageSelector from "./LanguageSelector";
 
 export default function SiteHeader() {
   return (
@@ -20,6 +21,7 @@ export default function SiteHeader() {
           </Link>
         </div>
         <MobileMenuButton />
+        <LanguageSelector />
         <div className="flex items-center gap-2">
           <Link
             href="/login"
