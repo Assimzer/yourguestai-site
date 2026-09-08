@@ -70,7 +70,7 @@ export default function SignupPage() {
               <input
                 type="text"
                 required
-                placeholder="Nom complet"
+                placeholder="Nom complet *"
                 value={nomComplet}
                 onChange={(e) => setNomComplet(e.target.value)}
                 className="rounded-lg border border-night-600 bg-night-800 px-4 py-2.5 text-sm text-white placeholder:text-mist-500 focus:border-porch-500"
@@ -78,15 +78,14 @@ export default function SignupPage() {
               <input
                 type="email"
                 required
-                placeholder="Email"
+                placeholder="Email *"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="rounded-lg border border-night-600 bg-night-800 px-4 py-2.5 text-sm text-white placeholder:text-mist-500 focus:border-porch-500"
               />
               <input
                 type="tel"
-                required
-                placeholder="Téléphone"
+                placeholder="Téléphone (optionnel)"
                 value={telephone}
                 onChange={(e) => setTelephone(e.target.value)}
                 className="rounded-lg border border-night-600 bg-night-800 px-4 py-2.5 text-sm text-white placeholder:text-mist-500 focus:border-porch-500"
@@ -102,7 +101,7 @@ export default function SignupPage() {
                 type="password"
                 required
                 minLength={8}
-                placeholder="Mot de passe (8 caractères min.)"
+                placeholder="Mot de passe (8 caractères min.) *"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="rounded-lg border border-night-600 bg-night-800 px-4 py-2.5 text-sm text-white placeholder:text-mist-500 focus:border-porch-500"
