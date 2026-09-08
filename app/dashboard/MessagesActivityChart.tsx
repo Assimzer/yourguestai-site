@@ -74,16 +74,23 @@ export default function MessagesActivityChart() {
   const height = 200;
   const padTop = 24;
   const padBottom = 28;
-  const padLeft = 8;
+  const padLeft = 28;
   const padRight = 8;
   const plotHeight = height - padTop - padBottom;
   const plotWidth = width - padLeft - padRight;
 
+  // Echelle logarithmique fixe (plutot que dynamique sur le max du jour) :
+  // les petits volumes du quotidien restent lisibles tout en laissant de la
+  // place pour de futurs pics d'activite, avec des reperes a des valeurs
+  // rondes plutot qu'un pourcentage abstrait.
+  const Y_TICKS = [1, 5, 10, 25, 50, 100, 500];
   const maxCount = Math.max(1, ...daily.map((d) => d.message_count));
+  const domainMax = Math.max(500, maxCount);
   const bandWidth = plotWidth / daily.length;
   const barWidth = Math.min(24, bandWidth * 0.55);
 
-  const yFor = (count: number) => (count / maxCount) * plotHeight;
+  const yFor = (count: number) =>
+    (Math.log10(count + 1) / Math.log10(domainMax + 1)) * plotHeight;
 
   return (
     <div className="mt-6 grid gap-4 lg:grid-cols-3">
@@ -125,17 +132,30 @@ export default function MessagesActivityChart() {
           role="img"
           aria-label={`Messages par jour sur les 14 derniers jours, ${totalMessages} messages au total`}
         >
-          {[0, 0.5, 1].map((f) => (
-            <line
-              key={f}
-              x1={padLeft}
-              x2={width - padRight}
-              y1={padTop + plotHeight * (1 - f)}
-              y2={padTop + plotHeight * (1 - f)}
-              stroke={GRID}
-              strokeWidth={1}
-            />
-          ))}
+          {Y_TICKS.filter((t) => t <= domainMax).map((t) => {
+            const y = padTop + plotHeight - yFor(t);
+            return (
+              <g key={t}>
+                <line
+                  x1={padLeft}
+                  x2={width - padRight}
+                  y1={y}
+                  y2={y}
+                  stroke={GRID}
+                  strokeWidth={1}
+                />
+                <text
+                  x={padLeft - 6}
+                  y={y + 3}
+                  textAnchor="end"
+                  fontSize={9}
+                  fill={AXIS_TEXT}
+                >
+                  {t}
+                </text>
+              </g>
+            );
+          })}
 
           {daily.map((d, i) => {
             const barHeight = Math.max(d.message_count > 0 ? 3 : 0, yFor(d.message_count));
