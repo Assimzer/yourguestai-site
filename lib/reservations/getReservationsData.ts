@@ -74,31 +74,39 @@ export async function getReservationsData(
     properties.map((p) => [normalize(p.cle_unique_airtable), p])
   );
 
-  const reservations: Reservation[] = (data.reservations ?? []).map(
-    (r: {
-      id: string;
-      cle_unique: string;
-      id_logement: string;
-      nom_voyageur?: string;
-      telephone_voyageur?: string;
-      code_conv?: string;
-      date_debut?: string;
-      date_fin?: string;
-    }) => {
-      const property = byIdLogement.get(normalize(r.id_logement));
-      return {
-        id: r.id,
-        cle_unique: r.cle_unique,
-        property_id: property?.id ?? "",
-        logement: property?.nom ?? r.id_logement,
-        nom_voyageur: r.nom_voyageur ?? "",
-        telephone_voyageur: r.telephone_voyageur ?? "",
-        code_conv: r.code_conv ?? "",
-        date_debut: r.date_debut ?? "",
-        date_fin: r.date_fin ?? "",
-      };
-    }
-  );
+  // Sécurité : on ne fait pas confiance au filtrage de n8n. Même si
+  // id_logements a été envoyé, on ne garde ici que les réservations dont le
+  // logement appartient réellement à cet hôte — sinon un filtre cassé ou
+  // absent côté n8n exposerait les réservations d'autres hôtes.
+  const reservations: Reservation[] = (data.reservations ?? [])
+    .filter((r: { id_logement: string }) =>
+      byIdLogement.has(normalize(r.id_logement))
+    )
+    .map(
+      (r: {
+        id: string;
+        cle_unique: string;
+        id_logement: string;
+        nom_voyageur?: string;
+        telephone_voyageur?: string;
+        code_conv?: string;
+        date_debut?: string;
+        date_fin?: string;
+      }) => {
+        const property = byIdLogement.get(normalize(r.id_logement))!;
+        return {
+          id: r.id,
+          cle_unique: r.cle_unique,
+          property_id: property.id,
+          logement: property.nom,
+          nom_voyageur: r.nom_voyageur ?? "",
+          telephone_voyageur: r.telephone_voyageur ?? "",
+          code_conv: r.code_conv ?? "",
+          date_debut: r.date_debut ?? "",
+          date_fin: r.date_fin ?? "",
+        };
+      }
+    );
 
   reservations.sort((a, b) => a.date_debut.localeCompare(b.date_debut));
 
