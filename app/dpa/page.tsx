@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Logo from "../components/Logo";
 import LegalPageNav from "../components/LegalPageNav";
 
 export const metadata: Metadata = {
@@ -11,9 +12,7 @@ export const metadata: Metadata = {
 export default function DpaPage() {
   return (
     <main className="mx-auto max-w-3xl px-6 py-20">
-      <Link href="/" className="font-display text-lg italic text-white">
-        YOURGUESTAI
-      </Link>
+      <Logo className="text-lg" />
 
       <h1 className="mt-10 font-display text-3xl italic text-white">
         Accord sur le traitement des données (DPA)

@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import Logo from "../components/Logo";
 import LogoutButton from "./LogoutButton";
 import SidebarNav from "./SidebarNav";
 import MobileNav from "./MobileNav";
@@ -21,9 +21,7 @@ export default async function DashboardLayout({
   return (
     <div className="flex min-h-screen bg-night-950">
       <aside className="hidden w-60 flex-col border-r border-night-800 px-4 py-6 sm:flex">
-        <Link href="/" className="mb-8 px-2 font-display text-lg italic text-white">
-          YOURGUESTAI
-        </Link>
+        <Logo className="mb-8 px-2 text-lg" />
         <SidebarNav />
         <div className="mt-auto border-t border-night-800 pt-4 px-2">
           <p className="truncate text-xs text-mist-500">{user.email}</p>
@@ -37,9 +35,7 @@ export default async function DashboardLayout({
         <header className="flex items-center justify-between border-b border-night-800 px-6 py-4 sm:hidden">
           <div className="flex items-center gap-3">
             <MobileNav userEmail={user.email ?? ""} />
-            <Link href="/" className="font-display text-lg italic text-white">
-              YOURGUESTAI
-            </Link>
+            <Logo className="text-lg" />
           </div>
           <LogoutButton />
         </header>

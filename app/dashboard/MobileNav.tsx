@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import Link from "next/link";
+import Logo from "../components/Logo";
 import SidebarNav from "./SidebarNav";
 
 // Volet de navigation mobile : la sidebar desktop est cachee en dessous de
@@ -37,13 +37,7 @@ export default function MobileNav({ userEmail }: { userEmail: string }) {
           />
           <div className="relative flex w-64 flex-col border-r border-night-800 bg-night-950 px-4 py-6">
             <div className="mb-8 flex items-center justify-between px-2">
-              <Link
-                href="/"
-                className="font-display text-lg italic text-white"
-                onClick={() => setOpen(false)}
-              >
-                YOURGUESTAI
-              </Link>
+              <Logo className="text-lg" onClick={() => setOpen(false)} />
               <button
                 type="button"
                 onClick={() => setOpen(false)}

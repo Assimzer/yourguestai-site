@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import Logo from "../components/Logo";
 
 export default function SignupPage() {
   const supabase = createClient();
@@ -63,9 +64,7 @@ export default function SignupPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-night-950 px-6">
       <div className="w-full max-w-sm">
-        <Link href="/" className="mb-8 block text-center font-display text-xl italic text-white">
-          YOURGUESTAI
-        </Link>
+        <Logo className="mx-auto mb-8 text-xl" />
 
         <div className="rounded-2xl border border-night-600 bg-night-900 p-8">
           <h1 className="font-display text-2xl text-white">Créer un compte</h1>
