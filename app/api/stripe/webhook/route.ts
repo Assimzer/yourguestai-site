@@ -1,5 +1,6 @@
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
+import { notifyN8nToggle } from "@/lib/n8n/notifyToggle";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 const supabase = createClient(
@@ -54,14 +55,46 @@ export async function POST(req: Request) {
       case "customer.subscription.updated":
       case "customer.subscription.deleted": {
         const sub = event.data.object as Stripe.Subscription;
-        await supabase
+        const newStatus = mapStripeStatus(sub.status);
+
+        const { data: updatedHosts } = await supabase
           .from("hosts")
           .update({
             subscription_status: sub.status,
-            statut_abonnement: mapStripeStatus(sub.status),
+            statut_abonnement: newStatus,
             logements_quantity: sub.items.data[0]?.quantity ?? 0,
           })
-          .eq("stripe_customer_id", sub.customer as string);
+          .eq("stripe_customer_id", sub.customer as string)
+          .select("id");
+
+        const hostId = updatedHosts?.[0]?.id;
+
+        // Si l'abonnement n'est plus payant (paiement refusé, résilié...),
+        // on désactive tous les logements actifs de cet hôte : sinon LÉO
+        // continuerait à répondre gratuitement après un incident de paiement.
+        if (hostId && newStatus !== "actif" && newStatus !== "essai") {
+          const { data: properties } = await supabase
+            .from("properties")
+            .select("id, cle_unique_airtable")
+            .eq("host_id", hostId)
+            .eq("actif", true);
+
+          if (properties && properties.length > 0) {
+            await supabase
+              .from("properties")
+              .update({ actif: false })
+              .eq("host_id", hostId)
+              .eq("actif", true);
+
+            for (const property of properties) {
+              try {
+                await notifyN8nToggle(property.cle_unique_airtable, false);
+              } catch {
+                // Statut déjà à jour côté Supabase ; échec de notification n8n à surveiller.
+              }
+            }
+          }
+        }
         break;
       }
 

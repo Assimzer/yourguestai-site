@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireUser, isAuthError } from "@/lib/supabase/requireUser";
 import { syncLogementQuantity } from "@/lib/stripe/syncLogementQuantity";
+import { notifyN8nToggle } from "@/lib/n8n/notifyToggle";
 
 export async function POST(request: Request) {
   const auth = await requireUser();
@@ -58,17 +59,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    await fetch(process.env.N8N_TOGGLE_WEBHOOK_URL!, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Webhook-Secret": process.env.N8N_WEBHOOK_SECRET!,
-      },
-      body: JSON.stringify({
-        id_logement: property.cle_unique_airtable,
-        actif,
-      }),
-    });
+    await notifyN8nToggle(property.cle_unique_airtable, actif);
   } catch {
     // Statut déjà à jour côté Supabase ; échec de notification n8n à surveiller.
   }
