@@ -40,10 +40,10 @@ const subprocessors = [
     guarantee: "Clauses contractuelles types (CCT)",
   },
   {
-    name: "Vercel Inc.",
-    service: "Hébergement du site et du tableau de bord",
-    country: "États-Unis",
-    guarantee: "Clauses contractuelles types (CCT)",
+    name: "OVH SAS",
+    service: "Hébergement du site et du tableau de bord (serveur VPS)",
+    country: "Canada (datacenter Beauharnois)",
+    guarantee: "Décision d'adéquation (Canada)",
   },
   {
     name: "Stripe, Inc. / Stripe Payments Europe Ltd",
