@@ -8,67 +8,14 @@ type Bubble = {
   name: string;
   avatar: string;
   text: string;
-  // Position en pourcentage dans le conteneur (0-100). Choisie pour
-  // rester dans le cadre (marge de sécurité) sur les plus petits écrans
-  // comme sur les plus grands, avec l'aide ratio du conteneur.
-  x: number;
-  y: number;
 };
 
 const bubbles: Bubble[] = [
-  {
-    id: "wifi",
-    name: "Camille",
-    avatar: "C",
-    text: "Le wifi ne marche pas…",
-    x: 20,
-    y: 18,
-  },
-  {
-    id: "checkin",
-    name: "Marc",
-    avatar: "M",
-    text: "On arrive à quelle heure ?",
-    x: 80,
-    y: 18,
-  },
-  {
-    id: "parking",
-    name: "Élise",
-    avatar: "É",
-    text: "Où puis-je me garer ?",
-    x: 20,
-    y: 82,
-  },
-  {
-    id: "urgence",
-    name: "Thomas",
-    avatar: "T",
-    text: "Fuite d'eau, aide !",
-    x: 80,
-    y: 82,
-  },
+  { id: "wifi", name: "Camille", avatar: "C", text: "Le wifi ne marche pas…" },
+  { id: "checkin", name: "Marc", avatar: "M", text: "On arrive à quelle heure ?" },
+  { id: "parking", name: "Élise", avatar: "É", text: "Où puis-je me garer ?" },
+  { id: "urgence", name: "Thomas", avatar: "T", text: "Fuite d'eau, aide !" },
 ];
-
-const CENTER = { x: 50, y: 50 };
-
-function curvePath(from: { x: number; y: number }, to: { x: number; y: number }) {
-  const midX = (from.x + to.x) / 2;
-  const midY = (from.y + to.y) / 2;
-  // Décalage perpendiculaire toujours dans le même sens de rotation
-  // (comme les pales d'une hélice) : chaque ligne s'écarte proprement de
-  // son propre côté au lieu de se superposer aux autres en formant un X
-  // au niveau du logo central.
-  const dx = to.x - from.x;
-  const dy = to.y - from.y;
-  const length = Math.hypot(dx, dy) || 1;
-  const curveOffset = 6;
-  const perpX = -dy / length;
-  const perpY = dx / length;
-  const ctrlX = midX + perpX * curveOffset;
-  const ctrlY = midY + perpY * curveOffset;
-  return `M ${from.x} ${from.y} Q ${ctrlX} ${ctrlY} ${to.x} ${to.y}`;
-}
 
 export default function HubSpokeDiagram() {
   const ref = useRef(null);
@@ -77,32 +24,11 @@ export default function HubSpokeDiagram() {
   return (
     <div
       ref={ref}
-      className="relative mx-auto aspect-[4/5] w-full max-w-2xl overflow-hidden sm:aspect-[16/10]"
+      className="mx-auto flex w-full max-w-2xl flex-col items-center"
     >
-      <svg
-        viewBox="0 0 100 100"
-        preserveAspectRatio="none"
-        className="absolute inset-0 h-full w-full"
-        aria-hidden
-      >
-        {bubbles.map((b, i) => (
-          <motion.path
-            key={b.id}
-            d={curvePath(CENTER, b)}
-            fill="none"
-            stroke="#E8A33D"
-            strokeWidth={0.4}
-            strokeOpacity={0.5}
-            initial={{ pathLength: 0 }}
-            animate={inView ? { pathLength: 1 } : { pathLength: 0 }}
-            transition={{ delay: i * 0.2, duration: 0.8, ease: "easeInOut" }}
-          />
-        ))}
-      </svg>
-
       {/* Logo central */}
       <motion.div
-        className="absolute left-1/2 top-1/2 flex h-14 w-14 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-porch-500/40 bg-night-900 shadow-glow sm:h-20 sm:w-20"
+        className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-porch-500/40 bg-night-900 shadow-glow sm:h-20 sm:w-20"
         initial={{ scale: 0.7, opacity: 0 }}
         animate={inView ? { scale: 1, opacity: 1 } : { scale: 0.7, opacity: 0 }}
         transition={{ duration: 0.4 }}
@@ -112,27 +38,43 @@ export default function HubSpokeDiagram() {
         </span>
       </motion.div>
 
-      {/* Bulles voyageurs */}
-      {bubbles.map((b, i) => (
-        <motion.div
-          key={b.id}
-          className="absolute w-28 -translate-x-1/2 -translate-y-1/2 rounded-xl border border-night-600 bg-night-900 p-2 shadow-lg sm:w-36 sm:p-2.5 md:w-44"
-          style={{ left: `${b.x}%`, top: `${b.y}%` }}
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={inView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
-          transition={{ delay: 0.3 + i * 0.2, duration: 0.4 }}
-        >
-          <div className="flex items-center gap-2">
-            <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-porch-500 text-[11px] font-semibold text-night-950">
-              {b.avatar}
-            </div>
-            <p className="truncate text-xs font-medium text-white">{b.name}</p>
+      {/* Tige verticale reliant LÉO à la barre horizontale */}
+      <motion.div
+        className="w-px bg-porch-500/40"
+        initial={{ height: 0 }}
+        animate={inView ? { height: 24 } : { height: 0 }}
+        transition={{ duration: 0.3, delay: 0.2 }}
+      />
+
+      {/* Barre horizontale + 4 branches vers les bulles */}
+      <div className="grid w-full grid-cols-4 gap-x-2 border-t border-porch-500/40 pt-6 sm:gap-x-4">
+        {bubbles.map((b, i) => (
+          <div key={b.id} className="relative flex justify-center">
+            <span
+              className="absolute -top-6 left-1/2 h-6 w-px -translate-x-1/2 bg-porch-500/40"
+              aria-hidden
+            />
+            <motion.div
+              className="flex w-full min-w-0 flex-col items-center gap-1 rounded-xl border border-night-600 bg-night-900 px-1.5 py-2 text-center shadow-lg sm:flex-row sm:gap-2 sm:px-3 sm:py-2.5 sm:text-left"
+              initial={{ opacity: 0, y: -6 }}
+              animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: -6 }}
+              transition={{ delay: 0.3 + i * 0.15, duration: 0.4 }}
+            >
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-porch-500 text-[11px] font-semibold text-night-950 sm:h-6 sm:w-6">
+                {b.avatar}
+              </div>
+              <div className="min-w-0">
+                <p className="truncate text-[10px] font-medium text-white sm:text-xs">
+                  {b.name}
+                </p>
+                <p className="hidden truncate text-[11px] leading-snug text-mist-400 sm:block">
+                  {b.text}
+                </p>
+              </div>
+            </motion.div>
           </div>
-          <p className="mt-1.5 truncate text-[11px] leading-snug text-mist-400">
-            {b.text}
-          </p>
-        </motion.div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }
