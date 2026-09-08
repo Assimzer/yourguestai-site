@@ -187,7 +187,7 @@ export default function Home() {
             <HubSpokeDiagram />
           </div>
 
-          <div className="mx-auto mt-14 max-w-sm">
+          <div className="mt-14">
             <RatingCard />
           </div>
         </div>

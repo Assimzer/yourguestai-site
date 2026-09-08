@@ -49,7 +49,7 @@ export default function RatingCard() {
   const current = EXAMPLES[index];
 
   return (
-    <div className="mx-auto flex w-full max-w-sm flex-col items-center justify-center rounded-2xl border border-night-600 bg-night-900 p-8 text-center" style={{ minHeight: 320 }}>
+    <div className="mx-auto flex w-full max-w-2xl flex-col items-center justify-center rounded-2xl border border-night-600 bg-night-900 p-6 text-center sm:p-8" style={{ minHeight: 260 }}>
       <p
         key={`label-${index}`}
         className="animate-[ygFadeIn_0.4s_ease-out] font-mono text-xs uppercase tracking-[0.2em] text-mist-500"
