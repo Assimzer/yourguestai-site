@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import Logo from "../components/Logo";
 import LegalPageNav from "../components/LegalPageNav";
 
 export const metadata: Metadata = {
@@ -56,9 +57,7 @@ const subprocessors = [
 export default function SousTraitantsPage() {
   return (
     <main className="mx-auto max-w-4xl px-6 py-20">
-      <Link href="/" className="font-display text-lg italic text-white">
-        YOURGUESTAI
-      </Link>
+      <Logo className="text-lg" />
 
       <h1 className="mt-10 font-display text-3xl italic text-white">
         Liste des sous-traitants

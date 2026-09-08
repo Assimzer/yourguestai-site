@@ -1,12 +1,11 @@
 import Link from "next/link";
+import Logo from "../components/Logo";
 import LegalPageNav from "../components/LegalPageNav";
 
 export default function PolitiqueConfidentialitePage() {
   return (
     <main className="mx-auto max-w-3xl px-6 py-20">
-      <Link href="/" className="font-display text-lg italic text-white">
-        YOURGUESTAI
-      </Link>
+      <Logo className="text-lg" />
 
       <h1 className="mt-10 font-display text-3xl italic text-white">
         Politique de confidentialité

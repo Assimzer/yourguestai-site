@@ -1,11 +1,10 @@
 import Link from "next/link";
+import Logo from "./components/Logo";
 
 export default function NotFound() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-night-950 px-6 text-center">
-      <Link href="/" className="mb-8 font-display text-xl italic text-white">
-        YOURGUESTAI
-      </Link>
+      <Logo className="mb-8 text-xl" />
       <p className="font-mono text-xs uppercase tracking-[0.2em] text-porch-500">
         Erreur 404
       </p>
