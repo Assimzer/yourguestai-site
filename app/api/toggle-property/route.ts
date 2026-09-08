@@ -35,8 +35,9 @@ export async function POST(request: Request) {
       .single();
 
     const hasAccess =
-      Boolean(host?.stripe_customer_id) &&
-      (host?.statut_abonnement === "actif" || host?.statut_abonnement === "essai");
+      host?.statut_abonnement === "illimite" ||
+      (Boolean(host?.stripe_customer_id) &&
+        (host?.statut_abonnement === "actif" || host?.statut_abonnement === "essai"));
 
     if (!hasAccess) {
       return NextResponse.json(

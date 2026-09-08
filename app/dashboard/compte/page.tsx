@@ -18,6 +18,7 @@ export default async function ComptePage() {
     .single();
 
   const hasStripeSubscription = Boolean(host?.stripe_customer_id);
+  const hasUnlimitedAccess = host?.statut_abonnement === "illimite";
 
   return (
     <div>
@@ -36,7 +37,9 @@ export default async function ComptePage() {
       <Row
         label="Statut"
         value={
-        host?.statut_abonnement === "actif"
+        host?.statut_abonnement === "illimite"
+          ? "Accès illimité"
+          : host?.statut_abonnement === "actif"
           ? "Actif"
           : host?.statut_abonnement === "essai"
           ? "Essai"
@@ -44,7 +47,7 @@ export default async function ComptePage() {
           ? "Suspendu"
           : "Non abonné"
         }
-      
+
         />
         <Row
           label="Logements facturés"
@@ -61,13 +64,15 @@ export default async function ComptePage() {
         />
       </div>
 
-      <div className="mt-6 max-w-md">
-        {hasStripeSubscription ? (
-          <ManageSubscriptionButton />
-        ) : (
-          <SubscribeButton />
-        )}
-      </div>
+      {!hasUnlimitedAccess && (
+        <div className="mt-6 max-w-md">
+          {hasStripeSubscription ? (
+            <ManageSubscriptionButton />
+          ) : (
+            <SubscribeButton />
+          )}
+        </div>
+      )}
     </div>
   );
 }
