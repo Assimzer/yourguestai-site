@@ -3,15 +3,15 @@
 import { useMemo, useState } from "react";
 
 function pricePerLogement(quantity: number) {
-  if (quantity >= 5) return 13;
-  if (quantity >= 3) return 16;
+  if (quantity >= 8) return 13;
+  if (quantity >= 4) return 16;
   return 19.9;
 }
 
 function tierLabel(quantity: number) {
-  if (quantity >= 5) return "5 logements et +";
-  if (quantity >= 3) return "3 à 4 logements";
-  return "1 à 2 logements";
+  if (quantity >= 8) return "8 logements et +";
+  if (quantity >= 4) return "4 à 7 logements";
+  return "1 à 3 logements";
 }
 
 function formatEuros(value: number) {

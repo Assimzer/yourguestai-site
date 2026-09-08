@@ -5,18 +5,18 @@ import Link from "next/link";
 
 const pricing = [
   {
-    range: "1 à 2 logements",
+    range: "1 à 3 logements",
     monthly: "19,90 €",
     yearlyEquivalent: "15,92 €",
     yearlyTotal: "191,04 € / an",
     benefits: [
-      "Adapté aux hôtes débutants qui gèrent 1-2 biens",
+      "Adapté aux hôtes débutants qui gèrent 1-3 biens",
       "Mise en route en quelques minutes",
       "Support prioritaire par WhatsApp",
     ],
   },
   {
-    range: "3 à 4 logements",
+    range: "4 à 7 logements",
     monthly: "16 €",
     yearlyEquivalent: "12,80 €",
     yearlyTotal: "153,60 € / an",
@@ -27,13 +27,13 @@ const pricing = [
     ],
   },
   {
-    range: "5 logements et +",
+    range: "8 logements et +",
     monthly: "13 €",
     yearlyEquivalent: "10,40 €",
     yearlyTotal: "124,80 € / an",
     benefits: [
       "Pensé pour les conciergeries multi-logements",
-      "Tarif dégressif dès le 5e logement",
+      "Tarif dégressif dès le 8e logement",
       "Un seul numéro WhatsApp pour tout gérer",
     ],
   },
