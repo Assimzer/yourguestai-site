@@ -1,13 +1,53 @@
 "use client";
 
-import { motion, useInView } from "framer-motion";
-import { useRef } from "react";
+import { useScroll, useTransform, useMotionValueEvent } from "framer-motion";
+import { useRef, useState } from "react";
 
-const TARGET_SCORE = 5;
+const MAX_SCORE = 5;
+
+function Star({ fill }: { fill: number }) {
+  const clampedFill = Math.max(0, Math.min(1, fill));
+  return (
+    <div className="relative h-8 w-8">
+      <svg width="32" height="32" viewBox="0 0 24 24" className="absolute inset-0 text-night-700">
+        <path
+          d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.5 6.8L12 16.9 5.8 20.4l1.5-6.8-5.1-4.6 6.9-.7L12 2z"
+          fill="currentColor"
+        />
+      </svg>
+      <div
+        className="absolute inset-0 overflow-hidden"
+        style={{ width: `${clampedFill * 100}%` }}
+      >
+        <svg width="32" height="32" viewBox="0 0 24 24" className="text-porch-500">
+          <path
+            d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.5 6.8L12 16.9 5.8 20.4l1.5-6.8-5.1-4.6 6.9-.7L12 2z"
+            fill="currentColor"
+          />
+        </svg>
+      </div>
+    </div>
+  );
+}
 
 export default function RatingCard() {
-  const ref = useRef(null);
-  const inView = useInView(ref, { once: true, amount: 0.6 });
+  const ref = useRef<HTMLDivElement>(null);
+
+  // La progression suit le scroll de l'utilisateur à travers la carte :
+  // 0 quand elle entre en bas du viewport, 1 quand elle atteint le tiers
+  // haut — le score et les étoiles se remplissent pendant qu'on scrolle,
+  // pas en un seul coup à l'apparition.
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ["start 90%", "start 30%"],
+  });
+
+  const scoreMotion = useTransform(scrollYProgress, [0, 1], [0, MAX_SCORE]);
+  const [score, setScore] = useState(0);
+
+  useMotionValueEvent(scoreMotion, "change", (v) => {
+    setScore(Math.max(0, Math.min(MAX_SCORE, v)));
+  });
 
   return (
     <div
@@ -20,35 +60,14 @@ export default function RatingCard() {
 
       <div className="mt-4 flex items-center justify-center gap-1">
         {Array.from({ length: 5 }).map((_, i) => (
-          <motion.svg
-            key={i}
-            width="28"
-            height="28"
-            viewBox="0 0 24 24"
-            initial={{ scale: 0.6, opacity: 0.2 }}
-            animate={
-              inView && i < TARGET_SCORE
-                ? { scale: 1, opacity: 1 }
-                : { scale: 0.6, opacity: 0.2 }
-            }
-            transition={{ delay: i * 0.15, type: "spring", stiffness: 300 }}
-          >
-            <path
-              d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.5 6.8L12 16.9 5.8 20.4l1.5-6.8-5.1-4.6 6.9-.7L12 2z"
-              fill="#E8A33D"
-            />
-          </motion.svg>
+          <Star key={i} fill={score - i} />
         ))}
       </div>
 
-      <motion.p
-        className="mt-4 font-display text-5xl text-white"
-        initial={{ opacity: 0, y: 10 }}
-        animate={inView ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
-        transition={{ delay: 0.7, duration: 0.4 }}
-      >
-        5<span className="text-2xl text-mist-500">/5</span>
-      </motion.p>
+      <p className="mt-4 font-display text-5xl text-white tabular-nums">
+        {score.toFixed(1)}
+        <span className="text-2xl text-mist-500">/5</span>
+      </p>
 
       <p className="mt-2 text-sm leading-relaxed text-mist-400">
         LÉO répond à vos voyageurs sur WhatsApp en moins de 30 secondes,
