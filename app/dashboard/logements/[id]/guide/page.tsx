@@ -34,7 +34,7 @@ export default async function GuidePage({
           <span className="text-mist-600">/</span>
           <span className="text-sm text-mist-400">{property.nom}</span>
           <span className="text-mist-600">/</span>
-          <span className="text-sm text-white">Livret d'accueil</span>
+          <span className="text-sm text-white">Éditer le logement</span>
         </div>
       </header>
 

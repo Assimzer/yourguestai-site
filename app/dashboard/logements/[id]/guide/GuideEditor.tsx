@@ -220,7 +220,7 @@ export default function GuideEditor({
       <div className="flex items-center justify-between">
         <div>
           <h2 className="font-display text-xl text-white">
-            Livret d'accueil — {propertyNom}
+            Éditer le logement — {propertyNom}
           </h2>
           <p className="mt-1 text-sm text-mist-400">
             Ces informations sont utilisées par LÉO et apparaissent dans le guide envoyé à vos voyageurs.
