@@ -12,6 +12,14 @@ export default async function ReservationsPage() {
     ? await getReservationsData(supabase, user.id)
     : { ok: false as const, error: "Non authentifié", status: 401 };
 
+  const { data: properties } = user
+    ? await supabase
+        .from("properties")
+        .select("id, nom")
+        .eq("host_id", user.id)
+        .order("nom")
+    : { data: null };
+
   return (
     <div>
       <h1 className="font-display text-2xl text-white">Réservations</h1>
@@ -23,6 +31,7 @@ export default async function ReservationsPage() {
         <ReservationsList
           initialReservations={result.ok ? result.reservations : []}
           initialError={result.ok ? null : result.error}
+          properties={properties ?? []}
         />
       </div>
     </div>

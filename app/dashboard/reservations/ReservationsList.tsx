@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 
 type Reservation = {
   id: string;
@@ -35,9 +35,12 @@ function overlapsDateRange(debut: string, fin: string, from: string, to: string)
 
 const PAGE_SIZE = 10;
 
+type Property = { id: string; nom: string };
+
 export default function ReservationsList({
   initialReservations,
   initialError,
+  properties,
 }: {
   // Rendu initial fourni par le Server Component parent (un seul aller-retour
   // au chargement de la page, plutot qu'un fetch client + spinner) ; `load()`
@@ -45,6 +48,7 @@ export default function ReservationsList({
   // generation de code...).
   initialReservations: Reservation[];
   initialError: string | null;
+  properties: Property[];
 }) {
   const [reservations, setReservations] = useState<Reservation[]>(initialReservations);
   const [loading, setLoading] = useState(false);
@@ -54,6 +58,47 @@ export default function ReservationsList({
   const [savedId, setSavedId] = useState<string | null>(null);
   const [codeCreatedId, setCodeCreatedId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [newPropertyId, setNewPropertyId] = useState(properties[0]?.id ?? "");
+  const [newNomVoyageur, setNewNomVoyageur] = useState("");
+  const [newTelephone, setNewTelephone] = useState("");
+  const [newDateDebut, setNewDateDebut] = useState("");
+  const [newDateFin, setNewDateFin] = useState("");
+
+  async function createReservation(e: FormEvent) {
+    e.preventDefault();
+    setCreating(true);
+    setCreateError(null);
+    try {
+      const res = await fetch("/api/reservations/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          property_id: newPropertyId,
+          nom_voyageur: newNomVoyageur,
+          telephone_voyageur: newTelephone,
+          date_debut: newDateDebut,
+          date_fin: newDateFin,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Échec de la création");
+
+      setNewNomVoyageur("");
+      setNewTelephone("");
+      setNewDateDebut("");
+      setNewDateFin("");
+      setShowCreateForm(false);
+      await load();
+    } catch (e) {
+      setCreateError(e instanceof Error ? e.message : "Erreur inconnue");
+    } finally {
+      setCreating(false);
+    }
+  }
 
   const [logementFilter, setLogementFilter] = useState("tous");
   const [dateFrom, setDateFrom] = useState("");
@@ -202,16 +247,104 @@ export default function ReservationsList({
     );
   }
 
+  const createSection = (
+    <div className="rounded-2xl border border-night-600 bg-night-900 p-4">
+      <button
+        type="button"
+        onClick={() => setShowCreateForm((v) => !v)}
+        className="text-sm font-medium text-porch-400 hover:text-porch-300"
+      >
+        {showCreateForm ? "Annuler" : "+ Nouvelle réservation"}
+      </button>
+
+      {showCreateForm && (
+        <form onSubmit={createReservation} className="mt-4 flex flex-col gap-3">
+          <label className="flex flex-col gap-1">
+            <span className="text-xs text-mist-400">Logement</span>
+            <select
+              required
+              value={newPropertyId}
+              onChange={(e) => setNewPropertyId(e.target.value)}
+              className="rounded-lg border border-night-600 bg-night-800 px-3 py-2 text-sm text-white"
+            >
+              <option value="" disabled>
+                Choisir un logement
+              </option>
+              {properties.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.nom}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-mist-400">Arrivée</span>
+              <input
+                type="date"
+                required
+                value={newDateDebut}
+                onChange={(e) => setNewDateDebut(e.target.value)}
+                className="rounded-lg border border-night-600 bg-night-800 px-3 py-2 text-sm text-white"
+              />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-mist-400">Départ</span>
+              <input
+                type="date"
+                required
+                value={newDateFin}
+                onChange={(e) => setNewDateFin(e.target.value)}
+                className="rounded-lg border border-night-600 bg-night-800 px-3 py-2 text-sm text-white"
+              />
+            </label>
+          </div>
+
+          <input
+            type="text"
+            value={newNomVoyageur}
+            onChange={(e) => setNewNomVoyageur(e.target.value)}
+            placeholder="Nom du voyageur (optionnel)"
+            className="rounded-lg border border-night-600 bg-night-800 px-3 py-2 text-sm text-white placeholder:text-mist-500"
+          />
+          <input
+            type="tel"
+            value={newTelephone}
+            onChange={(e) => setNewTelephone(e.target.value)}
+            placeholder="Téléphone du voyageur (optionnel)"
+            className="rounded-lg border border-night-600 bg-night-800 px-3 py-2 text-sm text-white placeholder:text-mist-500"
+          />
+
+          {createError && <p className="text-xs text-warn">{createError}</p>}
+
+          <button
+            type="submit"
+            disabled={creating || !newPropertyId}
+            className="self-start rounded-lg bg-porch-500 px-4 py-2 text-sm font-semibold text-night-950 transition hover:bg-porch-400 disabled:opacity-50"
+          >
+            {creating ? "Création…" : "Créer la réservation"}
+          </button>
+        </form>
+      )}
+    </div>
+  );
+
   if (reservations.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed border-night-600 px-6 py-12 text-center">
-        <p className="text-sm text-mist-400">Aucune réservation à venir.</p>
+      <div className="flex flex-col gap-6">
+        {createSection}
+        <div className="rounded-2xl border border-dashed border-night-600 px-6 py-12 text-center">
+          <p className="text-sm text-mist-400">Aucune réservation à venir.</p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="flex flex-col gap-6">
+      {createSection}
+
       <div className="flex flex-wrap items-end gap-3 rounded-2xl border border-night-600 bg-night-900 p-4">
         <label className="flex flex-col gap-1">
           <span className="text-xs text-mist-400">Logement</span>
