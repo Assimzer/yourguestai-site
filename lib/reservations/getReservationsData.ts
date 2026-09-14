@@ -1,5 +1,4 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { normalize } from "@/lib/airtable/normalize";
 
 export type Reservation = {
   id: string;
@@ -20,103 +19,58 @@ type Result =
 // Logique partagee entre app/api/reservations/route.ts (rafraichissements
 // cote client) et app/dashboard/reservations/page.tsx (rendu initial cote
 // serveur, sans aller-retour reseau supplementaire).
+//
+// Lit directement Supabase (table `reservations`) : plus de webhook n8n
+// ici. `supabase` est le client scope a la session de l'hote (cree par
+// requireUser()), donc les policies RLS de `reservations` (host_id via
+// jointure sur properties) filtrent deja aux seules reservations de cet
+// hote -- pas besoin de refiltrer manuellement cote JS.
 export async function getReservationsData(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   supabase: SupabaseClient<any, "public", any>,
-  userId: string
+  _userId: string
 ): Promise<Result> {
-  const { data: properties, error } = await supabase
-    .from("properties")
-    .select("id, nom, cle_unique_airtable")
-    .eq("host_id", userId);
+  const { data, error } = await supabase
+    .from("reservations")
+    .select(
+      "id, cle_unique, code_conv, nom_voyageur, telephone_voyageur, date_debut, date_fin, logement_id, properties(nom)"
+    )
+    .order("date_debut", { ascending: true });
 
   if (error) {
     return {
       ok: false,
-      error: "Impossible de charger vos logements",
+      error: "Impossible de charger vos réservations",
       status: 500,
     };
   }
 
-  if (!properties || properties.length === 0) {
-    return { ok: true, reservations: [] };
-  }
-
-  const idLogements = properties.map((p) => p.cle_unique_airtable);
-
-  let n8nRes: Response;
-  try {
-    n8nRes = await fetch(process.env.N8N_RESERVATIONS_WEBHOOK_URL!, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Webhook-Secret": process.env.N8N_WEBHOOK_SECRET!,
-      },
-      body: JSON.stringify({ id_logements: idLogements }),
-    });
-  } catch {
-    return { ok: false, error: "Impossible de contacter n8n", status: 502 };
-  }
-
-  if (!n8nRes.ok) {
-    return {
-      ok: false,
-      error: "Erreur n8n lors du chargement des réservations",
-      status: 502,
-    };
-  }
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let data: { reservations?: any[] };
-  try {
-    data = await n8nRes.json();
-  } catch {
-    // Réponse n8n vide ou non-JSON : on ne fait pas planter la page, on
-    // affiche juste une liste vide de réservations pour cette fois.
-    return { ok: true, reservations: [] };
-  }
-
-  // Ré-associe chaque réservation à l'id Supabase du logement (nécessaire
-  // pour les vérifications d'ownership des routes update-name / generate-code).
-  const byIdLogement = new Map(
-    properties.map((p) => [normalize(p.cle_unique_airtable), p])
+  const reservations: Reservation[] = (data ?? []).map(
+    (r: {
+      id: string;
+      cle_unique: string;
+      code_conv: string | null;
+      nom_voyageur: string | null;
+      telephone_voyageur: string | null;
+      date_debut: string;
+      date_fin: string;
+      logement_id: string;
+      properties: { nom: string } | { nom: string }[] | null;
+    }) => {
+      const property = Array.isArray(r.properties) ? r.properties[0] : r.properties;
+      return {
+        id: r.id,
+        cle_unique: r.cle_unique,
+        property_id: r.logement_id,
+        logement: property?.nom ?? "",
+        nom_voyageur: r.nom_voyageur ?? "",
+        telephone_voyageur: r.telephone_voyageur ?? "",
+        code_conv: r.code_conv ?? "",
+        date_debut: r.date_debut ?? "",
+        date_fin: r.date_fin ?? "",
+      };
+    }
   );
-
-  // Sécurité : on ne fait pas confiance au filtrage de n8n. Même si
-  // id_logements a été envoyé, on ne garde ici que les réservations dont le
-  // logement appartient réellement à cet hôte — sinon un filtre cassé ou
-  // absent côté n8n exposerait les réservations d'autres hôtes.
-  const reservations: Reservation[] = (data.reservations ?? [])
-    .filter((r: { id_logement: string }) =>
-      byIdLogement.has(normalize(r.id_logement))
-    )
-    .map(
-      (r: {
-        id: string;
-        cle_unique: string;
-        id_logement: string;
-        nom_voyageur?: string;
-        telephone_voyageur?: string;
-        code_conv?: string;
-        date_debut?: string;
-        date_fin?: string;
-      }) => {
-        const property = byIdLogement.get(normalize(r.id_logement))!;
-        return {
-          id: r.id,
-          cle_unique: r.cle_unique,
-          property_id: property.id,
-          logement: property.nom,
-          nom_voyageur: r.nom_voyageur ?? "",
-          telephone_voyageur: r.telephone_voyageur ?? "",
-          code_conv: r.code_conv ?? "",
-          date_debut: r.date_debut ?? "",
-          date_fin: r.date_fin ?? "",
-        };
-      }
-    );
-
-  reservations.sort((a, b) => a.date_debut.localeCompare(b.date_debut));
 
   return { ok: true, reservations };
 }

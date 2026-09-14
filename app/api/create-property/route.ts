@@ -55,15 +55,47 @@ export async function POST(request: Request) {
     }
   }
 
+  // Code_Logement : identifiant court transmis au voyageur pour s'identifier
+  // dès le premier message WhatsApp (ex. "LT047"). Unique tous logements
+  // confondus, généré ici pour ne jamais dépendre d'Airtable.
+  let codeLogement: string;
+  {
+    const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    let attempt = 0;
+    while (true) {
+      let candidate = "LT";
+      for (let i = 0; i < 4; i++) {
+        candidate += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
+      }
+      const { data: existing } = await supabase
+        .from("properties")
+        .select("id")
+        .eq("code_logement", candidate)
+        .maybeSingle();
+      if (!existing) {
+        codeLogement = candidate;
+        break;
+      }
+      attempt += 1;
+      if (attempt > 50) {
+        return NextResponse.json(
+          { error: "Impossible de générer un code logement unique, réessayez." },
+          { status: 500 }
+        );
+      }
+    }
+  }
+
   const { data: property, error: insertError } = await supabase
     .from("properties")
     .insert({
       host_id: user.id,
       nom: nom.trim(),
-      actif: false, // désactivé tant que la fiche Airtable n'est pas complétée
+      actif: false,
       cle_unique_airtable: slug,
+      code_logement: codeLogement,
     })
-    .select("id, nom, actif, ical_url")
+    .select("id, nom, actif, ical_url, code_logement")
     .single();
 
   if (insertError || !property) {
@@ -71,27 +103,6 @@ export async function POST(request: Request) {
       { error: "Échec de la création du logement" },
       { status: 500 }
     );
-  }
-
-  // Notifie n8n pour créer automatiquement la ligne correspondante dans
-  // Airtable.Logements — vide au départ (id_logement + nom uniquement),
-  // à compléter ensuite avec wifi/codes/règles depuis Airtable.
-  try {
-    await fetch(process.env.N8N_CREATE_PROPERTY_WEBHOOK_URL!, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Webhook-Secret": process.env.N8N_WEBHOOK_SECRET!,
-      },
-      body: JSON.stringify({
-        id_logement: slug,
-        nom: nom.trim(),
-        host_email: user.email,
-      }),
-    });
-  } catch {
-    // La ligne Supabase existe déjà (source de vérité pour le site) même
-    // si la notification n8n échoue ; à surveiller en production.
   }
 
   return NextResponse.json({ ok: true, property });
