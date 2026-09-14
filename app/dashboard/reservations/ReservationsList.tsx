@@ -53,10 +53,8 @@ export default function ReservationsList({
   const [reservations, setReservations] = useState<Reservation[]>(initialReservations);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(initialError);
-  const [generatingId, setGeneratingId] = useState<string | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [savedId, setSavedId] = useState<string | null>(null);
-  const [codeCreatedId, setCodeCreatedId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -149,37 +147,6 @@ export default function ReservationsList({
       // confirmation — l'hôte peut réessayer en cliquant à nouveau hors du champ.
     } finally {
       setSavingId(null);
-    }
-  }
-
-  async function generateCode(r: Reservation) {
-    setGeneratingId(r.id);
-    try {
-      const res = await fetch("/api/generate-conv-code", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          property_id: r.property_id,
-          cle_unique: r.cle_unique,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Échec de la génération");
-
-      setReservations((prev) =>
-        prev.map((res) =>
-          res.id === r.id ? { ...res, code_conv: data.code_conv } : res
-        )
-      );
-      setCodeCreatedId(r.id);
-      setTimeout(() => setCodeCreatedId((id) => (id === r.id ? null : id)), 3000);
-    } catch {
-      // La réponse HTTP peut échouer alors que n8n a quand même écrit le
-      // code côté Airtable — on recharge la liste depuis le serveur plutôt
-      // que d'afficher une alerte technique à l'hôte.
-      await load();
-    } finally {
-      setGeneratingId(null);
     }
   }
 
@@ -420,19 +387,6 @@ export default function ReservationsList({
                   </div>
 
                   <div className="flex items-center gap-2">
-                    {r.code_conv ? (
-                      <span className="flex items-center gap-1 rounded-lg bg-night-800 px-3 py-1 font-mono text-xs text-porch-400">
-                        {r.code_conv}
-                      </span>
-                    ) : (
-                      <button
-                        onClick={() => generateCode(r)}
-                        disabled={generatingId === r.id}
-                        className="rounded-lg border border-night-600 px-3 py-1 text-xs text-mist-300 transition hover:bg-night-800 disabled:opacity-50"
-                      >
-                        {generatingId === r.id ? "Génération…" : "Générer un code"}
-                      </button>
-                    )}
                     <button
                       onClick={() => deleteReservation(r)}
                       disabled={deletingId === r.id}
@@ -469,9 +423,6 @@ export default function ReservationsList({
                 )}
                 {savedId === r.id && (
                   <p className="mt-1.5 text-xs text-ok">Enregistré.</p>
-                )}
-                {codeCreatedId === r.id && (
-                  <p className="mt-1.5 text-xs text-ok">Code créé.</p>
                 )}
               </div>
             ))}
