@@ -15,7 +15,7 @@ export async function POST(request: Request) {
   // Vérifie ownership
   const { data: property, error } = await supabase
     .from("properties")
-    .select("id, host_id, cle_unique_airtable")
+    .select("id, host_id")
     .eq("id", property_id)
     .single();
 
@@ -23,8 +23,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Logement introuvable" }, { status: 404 });
 
   // Liste explicite des champs autorisés : évite qu'un champ arbitraire
-  // envoyé par le client (ex: "id_logement") n'écrase la valeur vérifiée
-  // ci-dessus et ne redirige la mise à jour vers le logement d'un autre hôte.
+  // envoyé par le client (ex: "host_id") n'écrase une valeur protégée et
+  // ne redirige la mise à jour vers le logement d'un autre hôte.
   const {
     adresse,
     photo_url,
@@ -43,15 +43,9 @@ export async function POST(request: Request) {
     contact_urgence,
   } = body;
 
-  // Envoie au webhook n8n update-guide (POST)
-  const res = await fetch(process.env.N8N_UPDATE_GUIDE_WEBHOOK_URL!, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Webhook-Secret": process.env.N8N_WEBHOOK_SECRET!,
-    },
-    body: JSON.stringify({
-      id_logement: property.cle_unique_airtable,
+  const { error: updateError } = await supabase
+    .from("properties")
+    .update({
       adresse,
       photo_url,
       checkin_heure,
@@ -67,10 +61,10 @@ export async function POST(request: Request) {
       regles_maison,
       recommandations,
       contact_urgence,
-    }),
-  });
+    })
+    .eq("id", property_id);
 
-  if (!res.ok) return NextResponse.json({ error: "Erreur n8n" }, { status: 502 });
+  if (updateError) return NextResponse.json({ error: "Erreur d'enregistrement" }, { status: 500 });
 
   return NextResponse.json({ ok: true });
 }

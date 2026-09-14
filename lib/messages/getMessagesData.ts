@@ -131,12 +131,12 @@ export async function getMessagesData(
   }
 
   const idLogements = properties.map((p) => p.cle_unique_airtable);
+  const propertyIds = properties.map((p) => p.id);
   const webhookBody = JSON.stringify({ id_logements: idLogements });
 
-  // Les deux webhooks n8n sont independants l'un de l'autre (tous deux ne
-  // dependent que de idLogements) : on les lance en parallele plutot qu'en
-  // sequence pour eviter d'attendre deux allers-retours reseau l'un apres
-  // l'autre.
+  // Les messages restent lus via n8n (table Messages) ; les reservations
+  // sont maintenant lues directement dans Supabase (table `reservations`) —
+  // on lance les deux en parallele plutot qu'en sequence.
   const [messagesResult, reservationsResult] = await Promise.allSettled([
     fetch(process.env.N8N_MESSAGES_WEBHOOK_URL!, {
       method: "POST",
@@ -146,16 +146,10 @@ export async function getMessagesData(
       },
       body: webhookBody,
     }),
-    process.env.N8N_RESERVATIONS_WEBHOOK_URL
-      ? fetch(process.env.N8N_RESERVATIONS_WEBHOOK_URL, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "X-Webhook-Secret": process.env.N8N_WEBHOOK_SECRET!,
-          },
-          body: webhookBody,
-        })
-      : Promise.resolve(null),
+    supabase
+      .from("reservations")
+      .select("logement_id, telephone_voyageur, date_debut, date_fin")
+      .in("logement_id", propertyIds),
   ]);
 
   if (messagesResult.status === "rejected") {
@@ -188,22 +182,34 @@ export async function getMessagesData(
     };
   }
 
-  // Reservations necessaires pour deduire le statut (EN_COURS/PROCHAIN/PASSE)
-  // de chaque conversation. Absence de reponse ou d'URL configuree =>
-  // statut "INCONNU" pour tout le monde, page pas bloquee pour autant.
-  let reservations: ReservationLike[] = [];
-  if (reservationsResult.status === "fulfilled" && reservationsResult.value?.ok) {
-    try {
-      const resaData = await reservationsResult.value.json();
-      reservations = resaData.reservations ?? [];
-    } catch {
-      // Statuts en INCONNU, le reste de la page reste fonctionnel.
-    }
-  }
-
   const byIdLogement = new Map(
     properties.map((p) => [normalize(p.cle_unique_airtable), p])
   );
+  const byPropertyId = new Map(properties.map((p) => [p.id, p]));
+
+  // Reservations necessaires pour deduire le statut (EN_COURS/PROCHAIN/PASSE)
+  // de chaque conversation. Erreur ou absence de donnees => statut
+  // "INCONNU" pour tout le monde, page pas bloquee pour autant. id_logement
+  // est deja resolu au nom du logement (Supabase), pas besoin de repasser
+  // par cle_unique_airtable comme pour les messages (webhook n8n externe).
+  let reservations: ReservationLike[] = [];
+  if (reservationsResult.status === "fulfilled" && !reservationsResult.value.error) {
+    reservations = (reservationsResult.value.data ?? [])
+      .map(
+        (r: {
+          logement_id: string;
+          telephone_voyageur: string | null;
+          date_debut: string | null;
+          date_fin: string | null;
+        }) => ({
+          id_logement: byPropertyId.get(r.logement_id)?.nom ?? "",
+          telephone_voyageur: r.telephone_voyageur ?? undefined,
+          date_debut: r.date_debut ?? undefined,
+          date_fin: r.date_fin ?? undefined,
+        })
+      )
+      .filter((r: ReservationLike) => r.id_logement);
+  }
 
   // Sécurité : on ne fait pas confiance au filtrage de n8n. Même si
   // id_logements a été envoyé, on ne garde ici que les messages dont le
@@ -235,17 +241,10 @@ export async function getMessagesData(
       }
     );
 
-  // Reservations : re-associe id_logement (Airtable) -> nom du logement
-  // (Supabase), pour matcher sur le meme libelle que les messages.
-  const resolvedReservations = reservations
-    .map((r) => {
-      const property = byIdLogement.get(normalize(r.id_logement));
-      return {
-        ...r,
-        id_logement: property?.nom ?? r.id_logement,
-      };
-    })
-    .filter((r) => r.id_logement);
+  // id_logement des reservations est deja le nom du logement (resolu plus
+  // haut), donc deja sur le meme referentiel que les messages -- pas de
+  // remappage supplementaire necessaire ici.
+  const resolvedReservations = reservations;
 
   // Regroupe par conversation (numero + logement) plutot que d'afficher
   // chaque ligne brute : plus lisible pour l'hote, qui voit en un coup

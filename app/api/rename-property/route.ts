@@ -17,7 +17,7 @@ export async function POST(request: Request) {
 
   const { data: property, error } = await supabase
     .from("properties")
-    .select("id, host_id, cle_unique_airtable")
+    .select("id, host_id")
     .eq("id", property_id)
     .single();
 
@@ -37,25 +37,6 @@ export async function POST(request: Request) {
       { error: "Échec de la mise à jour" },
       { status: 500 }
     );
-  }
-
-  // Repercute le nouveau nom dans Airtable.Logements (champ "Name", utilise
-  // pour l'affichage humain) ; id_logement (cle technique) ne change jamais.
-  try {
-    await fetch(process.env.N8N_UPDATE_PROPERTY_NAME_WEBHOOK_URL!, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Webhook-Secret": process.env.N8N_WEBHOOK_SECRET!,
-      },
-      body: JSON.stringify({
-        id_logement: property.cle_unique_airtable,
-        nom: trimmedNom,
-      }),
-    });
-  } catch {
-    // Le nom Supabase (source de verite cote site) est deja a jour meme si
-    // la synchro Airtable echoue ; a surveiller.
   }
 
   return NextResponse.json({ ok: true, nom: trimmedNom });

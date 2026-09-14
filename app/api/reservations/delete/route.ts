@@ -12,11 +12,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Paramètres manquants" }, { status: 400 });
   }
 
-  // Vérifie que ce logement appartient bien à l'hôte connecté avant de
-  // répercuter la suppression dans Airtable via n8n.
+  // Vérifie que ce logement appartient bien à l'hôte connecté.
   const { data: property, error } = await supabase
     .from("properties")
-    .select("id, host_id, cle_unique_airtable")
+    .select("id, host_id")
     .eq("id", property_id)
     .single();
 
@@ -24,29 +23,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Logement introuvable" }, { status: 404 });
   }
 
-  try {
-    const res = await fetch(process.env.N8N_DELETE_RESERVATION_WEBHOOK_URL!, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Webhook-Secret": process.env.N8N_WEBHOOK_SECRET!,
-      },
-      body: JSON.stringify({
-        id_logement: property.cle_unique_airtable,
-        cle_unique,
-      }),
-    });
+  const { error: deleteError } = await supabase
+    .from("reservations")
+    .delete()
+    .eq("logement_id", property_id)
+    .eq("cle_unique", cle_unique);
 
-    if (!res.ok) {
-      return NextResponse.json(
-        { error: "Échec de la suppression" },
-        { status: 502 }
-      );
-    }
-  } catch {
+  if (deleteError) {
     return NextResponse.json(
-      { error: "Impossible de contacter n8n" },
-      { status: 502 }
+      { error: "Échec de la suppression" },
+      { status: 500 }
     );
   }
 

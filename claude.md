@@ -14,9 +14,11 @@ logement configurées par l'hôte.
   ⚠️ Claude Code n'a PAS accès à ces workflows (ils ne sont pas dans ce dossier) —
   pour toute modification n8n, donner les instructions précises à l'utilisateur
   pour qu'il les applique lui-même dans l'éditeur n8n, jamais improviser.
-- **Stockage logements/messages** : Airtable (tables `Properties`/`Logements`,
-  `Messages`, `Reservations`), synchronisé avec Supabase (`properties`) via
-  webhooks n8n déclenchés par le site.
+- **Stockage logements/messages/réservations** : Supabase (`properties`,
+  `messages`, `reservations`) est la source de vérité unique pour le site.
+  Airtable est en cours de retrait (voir `docs/migration-n8n-guide.md`) :
+  seul le bot WhatsApp (nœuds internes du workflow n8n) y accède encore le
+  temps de finir la migration côté n8n.
 - **Paiement** : Stripe. Fonctionnel en mode test de bout en bout (Checkout,
   webhook, Customer Portal, sync quantity). Tarification "au volume" (le tarif
   du palier atteint s'applique à tous les logements actifs) :
@@ -38,7 +40,26 @@ logement configurées par l'hôte.
   toute nouvelle valeur doit être ajoutée à cette contrainte CHECK avant usage),
   `stripe_customer_id`, `stripe_subscription_id`, `logements_quantity`.
 - Table Supabase `properties` : `host_id`, `actif` (bool), `cle_unique_airtable`
-  (fait le lien avec Airtable côté n8n).
+  (fait le lien avec Airtable côté n8n, tant que la migration n'est pas
+  terminée), `code_logement` (code court style "LT047", généré à la création,
+  unique tous logements confondus -- sert au voyageur pour s'identifier au
+  premier message WhatsApp), plus les champs du "livret" (`adresse`,
+  `photo_url`, `checkin_heure`, `checkout_heure`, `instructions_arrivee`,
+  `code_acces`, `wifi_nom`, `wifi_code`, `parking_info`, `parking_photo_url`,
+  `equipements`, `equipements_photo_url`, `regles_maison`, `recommandations`,
+  `contact_urgence`) édités depuis `/dashboard/logements/[id]/guide`.
+- Table Supabase `reservations` : `logement_id` (FK vers `properties.id`),
+  `nom_voyageur`, `telephone_voyageur`, `date_debut`/`date_fin` (type `date`),
+  `code_conv` (ancien système d'identification par réservation, gardé pour
+  compat), `cle_unique` (clé technique utilisée par le site pour cibler une
+  réservation précise depuis delete/update-name/generate-conv-code). Vue
+  `reservations_avec_statut` : mêmes colonnes + `statut`
+  (EN_COURS/PROCHAIN/PASSE/INCONNU) calculé en SQL. RLS : un hôte ne voit que
+  les réservations de ses propres logements (jointure sur `properties.host_id`).
+- Table Supabase `messages` : `id_logement` (texte, = `cle_unique_airtable`),
+  `telephone`, `date`, `sens` (`entrant`/`sortant`), `escalade` (bool). Pas de
+  policy RLS -- verrouillée par défaut, seule la clé `service_role` (utilisée
+  par n8n) peut lire/écrire.
 - `lib/stripe/syncLogementQuantity.js` : synchronise la quantity Stripe avec le
   nombre de `properties.actif = true` d'un host. Proration uniquement à la
   hausse (jamais de crédit remboursé sur une baisse en cours de mois).

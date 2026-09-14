@@ -72,24 +72,26 @@ export default function GuideEditor({
     fetch(`/api/get-guide?property_id=${propertyId}`)
       .then((r) => r.json())
       .then((data) => {
-        // n8n renvoie { id, fields: { ... } } — on mappe les champs Airtable
+        // Colonnes lues directement depuis Supabase (properties) --
+        // les noms correspondent exactement, plus besoin de fallback
+        // vers d'anciens noms de champs Airtable.
         const f = data.fields ?? {};
         setFields({
           adresse: f.adresse ?? "",
           photo_url: f.photo_url ?? "",
-          checkin_heure: f.checkin_heure ?? f.checkin ?? "",
-          checkout_heure: f.checkout_heure ?? f.checkout ?? "",
+          checkin_heure: f.checkin_heure ?? "",
+          checkout_heure: f.checkout_heure ?? "",
           instructions_arrivee: f.instructions_arrivee ?? "",
-          code_acces: f.Code_Acces ?? f.code_acces ?? "",
+          code_acces: f.code_acces ?? "",
           wifi_nom: f.wifi_nom ?? "",
           wifi_code: f.wifi_code ?? "",
-          parking_info: f.parking_info ?? f.parking ?? "",
+          parking_info: f.parking_info ?? "",
           parking_photo_url: f.parking_photo_url ?? "",
           equipements: f.equipements ?? "",
           equipements_photo_url: f.equipements_photo_url ?? "",
-          regles_maison: f.regles_maison ?? f.regle ?? "",
+          regles_maison: f.regles_maison ?? "",
           recommandations: f.recommandations ?? "",
-          contact_urgence: f.contact_urgence ?? f.contact ?? "",
+          contact_urgence: f.contact_urgence ?? "",
         });
       })
       .catch(() => setError("Impossible de charger les données du livret."))

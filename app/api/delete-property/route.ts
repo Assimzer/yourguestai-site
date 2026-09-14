@@ -15,7 +15,7 @@ export async function POST(request: Request) {
 
   const { data: property, error: fetchError } = await supabase
     .from("properties")
-    .select("id, host_id, cle_unique_airtable")
+    .select("id, host_id")
     .eq("id", property_id)
     .single();
 
@@ -33,21 +33,6 @@ export async function POST(request: Request) {
       { error: "Échec de la suppression" },
       { status: 500 }
     );
-  }
-
-  try {
-    await fetch(process.env.N8N_DELETE_PROPERTY_WEBHOOK_URL!, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Webhook-Secret": process.env.N8N_WEBHOOK_SECRET!,
-      },
-      body: JSON.stringify({
-        id_logement: property.cle_unique_airtable,
-      }),
-    });
-  } catch {
-    // Suppression déjà effective côté Supabase ; échec de notification n8n à surveiller.
   }
 
   // Sync Stripe : un logement en moins, on répercute la quantity.
