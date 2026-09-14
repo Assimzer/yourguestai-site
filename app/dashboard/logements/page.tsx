@@ -11,7 +11,7 @@ export default async function LogementsPage() {
 
   const { data: properties, error } = await supabase
     .from("properties")
-    .select("id, nom, actif, ical_url")
+    .select("id, nom, actif, ical_url, code_logement")
     .eq("host_id", user!.id)
     .order("nom");
 

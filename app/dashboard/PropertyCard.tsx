@@ -9,6 +9,7 @@ type Property = {
   nom: string;
   actif: boolean;
   ical_url: string | null;
+  code_logement: string | null;
 };
 
 export default function PropertyCard({
@@ -36,6 +37,26 @@ export default function PropertyCard({
   const [nom, setNom] = useState(property.nom);
   const [savingNom, setSavingNom] = useState(false);
   const [renameError, setRenameError] = useState<string | null>(null);
+  const [showShare, setShowShare] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
+
+  // Meme numero WhatsApp que WhatsappQrCard.tsx : un seul numero pour tous
+  // les logements, le voyageur est identifie via le code_logement pre-rempli
+  // dans le lien plutot que par le numero appele.
+  const shareLink = property.code_logement
+    ? `https://wa.me/33624099289?text=${encodeURIComponent(property.code_logement)}`
+    : null;
+
+  async function copyShareLink() {
+    if (!shareLink) return;
+    try {
+      await navigator.clipboard.writeText(shareLink);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch {
+      // Presse-papiers indisponible : le lien reste affiche et selectionnable a la main.
+    }
+  }
 
   async function handleToggle() {
     const next = !actif;
@@ -252,10 +273,10 @@ export default function PropertyCard({
         {icalSaved && <p className="text-xs text-ok">Calendrier connecté.</p>}
       </form>
 
-      <div className="mt-4 border-t border-night-700 pt-4">
+      <div className="mt-4 flex gap-2 border-t border-night-700 pt-4">
         <Link
           href={`/dashboard/logements/${property.id}/guide`}
-          className="flex w-full items-center justify-center gap-2 rounded-lg border border-night-600 bg-night-800 px-4 py-2.5 text-xs font-medium text-mist-400 transition hover:border-porch-500/40 hover:text-white"
+          className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-night-600 bg-night-800 px-4 py-2.5 text-xs font-medium text-mist-400 transition hover:border-porch-500/40 hover:text-white"
         >
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -266,7 +287,53 @@ export default function PropertyCard({
           </svg>
           Éditer le logement
         </Link>
+
+        {shareLink && (
+          <button
+            type="button"
+            onClick={() => setShowShare((v) => !v)}
+            className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-night-600 bg-night-800 px-4 py-2.5 text-xs font-medium text-mist-400 transition hover:border-porch-500/40 hover:text-white"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="18" cy="5" r="3" />
+              <circle cx="6" cy="12" r="3" />
+              <circle cx="18" cy="19" r="3" />
+              <line x1="8.6" y1="10.5" x2="15.4" y2="6.5" />
+              <line x1="8.6" y1="13.5" x2="15.4" y2="17.5" />
+            </svg>
+            Partager
+          </button>
+        )}
       </div>
+
+      {showShare && shareLink && (
+        <div className="mt-3 rounded-lg border border-night-600 bg-night-950 p-3">
+          <p className="text-xs text-mist-400">
+            Collez ce lien dans le message automatique d&apos;accueil Airbnb
+            (ou Booking). Le voyageur n&apos;aura qu&apos;à cliquer : WhatsApp
+            s&apos;ouvre avec le code{" "}
+            <span className="font-mono text-porch-400">
+              {property.code_logement}
+            </span>{" "}
+            déjà prêt à être envoyé.
+          </p>
+          <div className="mt-2 flex gap-2">
+            <input
+              readOnly
+              value={shareLink}
+              onFocus={(e) => e.target.select()}
+              className="flex-1 rounded-lg border border-night-600 bg-night-800 px-3 py-2 font-mono text-xs text-white"
+            />
+            <button
+              type="button"
+              onClick={copyShareLink}
+              className="shrink-0 rounded-lg bg-porch-500 px-3 py-2 text-xs font-semibold text-night-950 transition hover:bg-porch-400"
+            >
+              {linkCopied ? "Copié ✓" : "Copier"}
+            </button>
+          </div>
+        </div>
+      )}
 
       {confirmingDelete && (
         <div className="mt-4 rounded-lg border border-warn/30 bg-warn/10 p-3">
