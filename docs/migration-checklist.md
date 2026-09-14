@@ -3,7 +3,7 @@
 ## Base de données
 
 - [ ] `supabase/migrations/001_logements_reservations.sql` exécuté sans erreur dans Supabase → SQL Editor
-- [ ] `properties` a bien les nouvelles colonnes (`code_logement`, `wifi_nom`, `consignes_arrivee`, etc.)
+- [ ] `properties` a bien les nouvelles colonnes (`code_logement`, `wifi_nom`, `instructions_arrivee`, etc.)
 - [ ] Table `reservations` créée, RLS activé (vérifier dans Supabase → Authentication → Policies)
 - [ ] Vue `reservations_avec_statut` existe et renvoie bien un `statut` cohérent (teste avec une réservation dont tu connais les dates)
 - [ ] `date_debut`/`date_fin` sont bien de type `date` (pas `text`) — vérifiable dans Table Editor, colonne "type"

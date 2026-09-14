@@ -8,7 +8,7 @@ type GuideFields = {
   photo_url: string;
   checkin_heure: string;
   checkout_heure: string;
-  consignes_arrivee: string;
+  instructions_arrivee: string;
   code_acces: string;
   wifi_nom: string;
   wifi_code: string;
@@ -26,7 +26,7 @@ const EMPTY: GuideFields = {
   photo_url: "",
   checkin_heure: "",
   checkout_heure: "",
-  consignes_arrivee: "",
+  instructions_arrivee: "",
   code_acces: "",
   wifi_nom: "",
   wifi_code: "",
@@ -81,7 +81,7 @@ export default function GuideEditor({
           photo_url: f.photo_url ?? "",
           checkin_heure: f.checkin_heure ?? "",
           checkout_heure: f.checkout_heure ?? "",
-          consignes_arrivee: f.consignes_arrivee ?? "",
+          instructions_arrivee: f.instructions_arrivee ?? "",
           code_acces: f.code_acces ?? "",
           wifi_nom: f.wifi_nom ?? "",
           wifi_code: f.wifi_code ?? "",
@@ -363,8 +363,8 @@ export default function GuideEditor({
         >
           <textarea
             rows={4}
-            value={fields.consignes_arrivee}
-            onChange={set("consignes_arrivee")}
+            value={fields.instructions_arrivee}
+            onChange={set("instructions_arrivee")}
             placeholder="En arrivant, prenez la deuxième rue à droite après la boulangerie. La boîte à clés se trouve à côté de la porte d'entrée…"
           />
         </Field>

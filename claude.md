@@ -44,7 +44,7 @@ logement configurées par l'hôte.
   terminée), `code_logement` (code court style "LT047", généré à la création,
   unique tous logements confondus -- sert au voyageur pour s'identifier au
   premier message WhatsApp), plus les champs du "livret" (`adresse`,
-  `photo_url`, `checkin_heure`, `checkout_heure`, `consignes_arrivee`,
+  `photo_url`, `checkin_heure`, `checkout_heure`, `instructions_arrivee`,
   `code_acces`, `wifi_nom`, `wifi_code`, `parking_info`, `parking_photo_url`,
   `equipements`, `equipements_photo_url`, `regles_maison`, `recommandations`,
   `contact_urgence`) édités depuis `/dashboard/logements/[id]/guide`.

@@ -23,14 +23,16 @@
  *
  * Comportement :
  *  - Logements.csv : met à jour les lignes `properties` DEJA existantes
- *    (créées via le site), en les retrouvant par `cle_unique_airtable` =
- *    la colonne `id_logement` du CSV. Ne crée jamais de nouvelle ligne
- *    `properties` (une ligne orpheline dans le CSV = un avertissement, pas
- *    une insertion).
+ *    (créées via le site), en les retrouvant par `cle_unique_airtable`
+ *    (colonne `id_logement` du CSV). La comparaison est normalisée
+ *    (espaces/underscores/caractères invisibles ignorés, casse ignorée) --
+ *    plusieurs lignes Airtable réelles contiennent des caractères
+ *    invisibles cachés dans les noms, cette normalisation les gère. Ne crée
+ *    jamais de nouvelle ligne `properties` (une ligne orpheline dans le CSV
+ *    = un avertissement, pas une insertion).
  *  - Reservations.csv : insère une ligne dans `reservations` par ligne CSV,
- *    en résolvant `logement_id` via `properties.cle_unique_airtable` =
- *    la colonne `id_logement_lookup` du CSV (adapte ce nom de colonne plus
- *    bas si ton export Airtable utilise un intitulé différent).
+ *    en résolvant `logement_id` via la même comparaison normalisée sur
+ *    `id_logement_lookup`.
  */
 
 import { readFileSync } from "node:fs";
@@ -38,33 +40,60 @@ import { parse } from "csv-parse/sync";
 import { createClient } from "@supabase/supabase-js";
 
 // ---------------------------------------------------------------------------
-// Config -- adapte ces noms de colonnes si tes CSV exportés d'Airtable
-// utilisent des intitulés différents de ceux du schéma décrit dans la
-// conversation.
+// Normalisation -- identique a lib/airtable/normalize.ts du site (espace
+// insecable, caracteres zero-largeur, BOM... peuvent se glisser dans un
+// export Airtable sans etre visibles a l'oeil).
+// ---------------------------------------------------------------------------
+
+const INVISIBLE_CHARS = [0x200b, 0x200c, 0x200d, 0xfeff, 0x00a0, 0x2060]
+  .map((code) => String.fromCharCode(code))
+  .join("");
+const INVISIBLE_CHARS_RE = new RegExp(`[${INVISIBLE_CHARS}]`, "g");
+
+function normalize(s) {
+  return (s || "")
+    .normalize("NFKC")
+    .replace(INVISIBLE_CHARS_RE, "")
+    .trim()
+    .toLowerCase()
+    .replace(/[\s_]+/g, "");
+}
+
+// ---------------------------------------------------------------------------
+// Config -- noms de colonnes tels qu'observes dans les exports CSV reels
+// (adapte si ton export utilise des intitules differents).
 // ---------------------------------------------------------------------------
 
 const LOGEMENTS_COLUMNS = {
   id_logement: "id_logement",
-  code_logement: "Code_Logement",
-  nom_conciergerie: "Nom_Conciergerie",
-  numero_proprietaire: "Numero_Proprietaire",
-  numero_proprietaire_defaut: "Numero_Proprietaire_Defaut",
+  code_logement: "code", // colonne "code" (ex: "LT047"), PAS "Code_Logement"
+  numero_proprietaire: "numero_proprietaire",
   adresse: "adresse",
   ville: "ville",
-  wifi_nom: "Wifi_Nom",
+  wifi_nom: "wifi_nom",
   wifi_code: "wifi_code",
   code_acces: "Code_Acces",
-  checkin_heure: "checkin",
-  checkout_heure: "checkout",
-  parking_info: "parking",
-  consignes_arrivee: "Consignes_Arrivee",
-  regles_maison: "regle",
+  // Prefere les champs deja geres par le site (remplis via le Guide Editor)
+  // aux champs bruts Airtable d'origine (checkin/checkout/parking/regle).
+  checkin_heure: "checkin_heure",
+  checkout_heure: "checkout_heure",
+  parking_info: "parking_info",
+  instructions_arrivee: "instructions_arrivee",
+  regles_maison: "regles_maison",
+  recommandations: "recommandations",
+  contact_urgence: "contact_urgence",
+  photo_url: "photo_url",
   parking_photo_url: "parking_photo_url",
+  equipements: "equipements",
   equipements_photo_url: "equipements_photo_url",
 };
 
 const RESERVATIONS_COLUMNS = {
   id_logement_lookup: "id_logement_lookup",
+  // Repli si le lookup est vide (lien casse cote Airtable vers une ligne
+  // Logement fantome/dupliquee) : le nom affiche du logement lie reste
+  // present et se normalise correctement (caracteres invisibles retires).
+  logement_fallback: "Logement",
   nom_voyageur: "Nom_Voyageur",
   telephone_voyageur: "Telephone_Voyageur",
   date_debut: "Date_Debut",
@@ -90,8 +119,8 @@ function readCsv(path) {
   return parse(raw, { columns: true, skip_empty_lines: true, trim: true });
 }
 
-// Convertit une date Airtable (souvent "2026-09-14" ou "14/09/2026" ou avec
-// heure) en "YYYY-MM-DD" pur, attendu par la colonne Postgres `date`.
+// Convertit une date Airtable (souvent "2026-09-14" ou avec heure) en
+// "YYYY-MM-DD" pur, attendu par la colonne Postgres `date`.
 function toIsoDate(value) {
   if (!value) return null;
   const d = new Date(value);
@@ -105,7 +134,23 @@ function emptyToNull(value) {
   return trimmed === "" ? null : trimmed;
 }
 
-async function migrateLogements(supabase, csvPath, dryRun) {
+async function loadPropertiesByNormalizedKey(supabase) {
+  const { data, error } = await supabase
+    .from("properties")
+    .select("id, nom, cle_unique_airtable");
+
+  if (error) {
+    throw new Error(`Impossible de charger properties: ${error.message}`);
+  }
+
+  const map = new Map();
+  for (const p of data ?? []) {
+    map.set(normalize(p.cle_unique_airtable), p);
+  }
+  return map;
+}
+
+async function migrateLogements(supabase, csvPath, byNormalizedKey, dryRun) {
   const rows = readCsv(csvPath);
   console.log(`\n=== Logements : ${rows.length} lignes dans le CSV ===`);
 
@@ -114,19 +159,25 @@ async function migrateLogements(supabase, csvPath, dryRun) {
   let errors = 0;
 
   for (const row of rows) {
-    const idLogement = emptyToNull(row[LOGEMENTS_COLUMNS.id_logement]);
-    if (!idLogement) {
-      console.warn("  [skip] ligne sans id_logement:", row);
+    const idLogementRaw = emptyToNull(row[LOGEMENTS_COLUMNS.id_logement]);
+    if (!idLogementRaw) {
+      // Lignes de test/brouillon sans id_logement (ex: "ff", "dd") -- pas
+      // de logement Supabase a mettre a jour, on ignore silencieusement.
+      continue;
+    }
+
+    const match = byNormalizedKey.get(normalize(idLogementRaw));
+    if (!match) {
+      orphans++;
+      console.warn(
+        `  [orphelin] aucun logement Supabase pour id_logement='${idLogementRaw}' (normalisé: '${normalize(idLogementRaw)}')`
+      );
       continue;
     }
 
     const patch = {
       code_logement: emptyToNull(row[LOGEMENTS_COLUMNS.code_logement]),
-      nom_conciergerie: emptyToNull(row[LOGEMENTS_COLUMNS.nom_conciergerie]),
       numero_proprietaire: emptyToNull(row[LOGEMENTS_COLUMNS.numero_proprietaire]),
-      numero_proprietaire_defaut: emptyToNull(
-        row[LOGEMENTS_COLUMNS.numero_proprietaire_defaut]
-      ),
       adresse: emptyToNull(row[LOGEMENTS_COLUMNS.adresse]),
       ville: emptyToNull(row[LOGEMENTS_COLUMNS.ville]),
       wifi_nom: emptyToNull(row[LOGEMENTS_COLUMNS.wifi_nom]),
@@ -135,29 +186,40 @@ async function migrateLogements(supabase, csvPath, dryRun) {
       checkin_heure: emptyToNull(row[LOGEMENTS_COLUMNS.checkin_heure]),
       checkout_heure: emptyToNull(row[LOGEMENTS_COLUMNS.checkout_heure]),
       parking_info: emptyToNull(row[LOGEMENTS_COLUMNS.parking_info]),
-      consignes_arrivee: emptyToNull(row[LOGEMENTS_COLUMNS.consignes_arrivee]),
+      instructions_arrivee: emptyToNull(row[LOGEMENTS_COLUMNS.instructions_arrivee]),
       regles_maison: emptyToNull(row[LOGEMENTS_COLUMNS.regles_maison]),
+      recommandations: emptyToNull(row[LOGEMENTS_COLUMNS.recommandations]),
+      contact_urgence: emptyToNull(row[LOGEMENTS_COLUMNS.contact_urgence]),
+      photo_url: emptyToNull(row[LOGEMENTS_COLUMNS.photo_url]),
       parking_photo_url: emptyToNull(row[LOGEMENTS_COLUMNS.parking_photo_url]),
+      equipements: emptyToNull(row[LOGEMENTS_COLUMNS.equipements]),
       equipements_photo_url: emptyToNull(row[LOGEMENTS_COLUMNS.equipements_photo_url]),
     };
 
-    if (dryRun) {
-      console.log(`  [dry-run] UPDATE properties SET ... WHERE cle_unique_airtable = '${idLogement}'`);
+    // Ne remplace jamais une valeur deja renseignee cote Supabase par du
+    // vide venant d'une ligne CSV incomplete (utile car plusieurs logements
+    // ont deja ete edites via le site avant cette migration).
+    const cleanPatch = Object.fromEntries(
+      Object.entries(patch).filter(([, v]) => v !== null)
+    );
+
+    if (Object.keys(cleanPatch).length === 0) {
       continue;
     }
 
-    const { data, error } = await supabase
+    if (dryRun) {
+      console.log(`  [dry-run] UPDATE properties (id=${match.id}, nom='${match.nom}') SET`, cleanPatch);
+      continue;
+    }
+
+    const { error } = await supabase
       .from("properties")
-      .update(patch)
-      .eq("cle_unique_airtable", idLogement)
-      .select("id");
+      .update(cleanPatch)
+      .eq("id", match.id);
 
     if (error) {
       errors++;
-      console.error(`  [erreur] ${idLogement}:`, error.message);
-    } else if (!data || data.length === 0) {
-      orphans++;
-      console.warn(`  [orphelin] aucun logement Supabase avec cle_unique_airtable = '${idLogement}'`);
+      console.error(`  [erreur] ${idLogementRaw} (id=${match.id}):`, error.message);
     } else {
       updated++;
     }
@@ -166,38 +228,26 @@ async function migrateLogements(supabase, csvPath, dryRun) {
   console.log(`Logements : ${updated} mis à jour, ${orphans} orphelins, ${errors} erreurs.`);
 }
 
-async function migrateReservations(supabase, csvPath, dryRun) {
+async function migrateReservations(supabase, csvPath, byNormalizedKey, dryRun) {
   const rows = readCsv(csvPath);
   console.log(`\n=== Reservations : ${rows.length} lignes dans le CSV ===`);
 
-  // Charge une fois toutes les properties pour résoudre les logement_id
-  // sans faire une requête par ligne.
-  const { data: properties, error: propsError } = await supabase
-    .from("properties")
-    .select("id, cle_unique_airtable");
-
-  if (propsError) {
-    console.error("Impossible de charger properties:", propsError.message);
-    return;
-  }
-
-  const byCleUnique = new Map(
-    (properties ?? []).map((p) => [p.cle_unique_airtable, p.id])
-  );
-
   let inserted = 0;
   let orphans = 0;
+  let skippedDates = 0;
   let errors = 0;
   const toInsert = [];
 
   for (const row of rows) {
-    const idLogementLookup = emptyToNull(row[RESERVATIONS_COLUMNS.id_logement_lookup]);
-    const logementId = idLogementLookup ? byCleUnique.get(idLogementLookup) : undefined;
+    const idLogementLookupRaw =
+      emptyToNull(row[RESERVATIONS_COLUMNS.id_logement_lookup]) ||
+      emptyToNull(row[RESERVATIONS_COLUMNS.logement_fallback]);
+    const match = idLogementLookupRaw ? byNormalizedKey.get(normalize(idLogementLookupRaw)) : undefined;
 
-    if (!logementId) {
+    if (!match) {
       orphans++;
       console.warn(
-        `  [orphelin] réservation sans logement correspondant (id_logement_lookup='${idLogementLookup}')`
+        `  [orphelin] réservation sans logement correspondant (id_logement_lookup='${idLogementLookupRaw}')`
       );
       continue;
     }
@@ -205,16 +255,20 @@ async function migrateReservations(supabase, csvPath, dryRun) {
     const dateDebut = toIsoDate(row[RESERVATIONS_COLUMNS.date_debut]);
     const dateFin = toIsoDate(row[RESERVATIONS_COLUMNS.date_fin]);
     if (!dateDebut || !dateFin) {
-      console.warn(`  [skip] dates invalides pour la ligne:`, row);
+      skippedDates++;
+      console.warn(`  [skip] dates invalides pour la ligne (logement='${match.nom}'):`, {
+        date_debut: row[RESERVATIONS_COLUMNS.date_debut],
+        date_fin: row[RESERVATIONS_COLUMNS.date_fin],
+      });
       continue;
     }
 
     const cleUnique =
       emptyToNull(row[RESERVATIONS_COLUMNS.cle_unique]) ||
-      `${idLogementLookup}_${dateDebut}_${Math.random().toString(36).slice(2, 8)}`;
+      `${idLogementLookupRaw}_${dateDebut}_${Math.random().toString(36).slice(2, 8)}`;
 
     toInsert.push({
-      logement_id: logementId,
+      logement_id: match.id,
       nom_voyageur: emptyToNull(row[RESERVATIONS_COLUMNS.nom_voyageur]),
       telephone_voyageur: emptyToNull(row[RESERVATIONS_COLUMNS.telephone_voyageur]),
       date_debut: dateDebut,
@@ -226,15 +280,21 @@ async function migrateReservations(supabase, csvPath, dryRun) {
 
   if (dryRun) {
     console.log(`  [dry-run] ${toInsert.length} lignes seraient insérées dans reservations.`);
-    console.log(`Reservations : ${toInsert.length} à insérer, ${orphans} orphelines.`);
+    console.log(
+      `Reservations : ${toInsert.length} à insérer, ${orphans} orphelines, ${skippedDates} dates invalides.`
+    );
     return;
   }
 
-  // Insertion par lots de 500 pour rester raisonnable côté API.
+  // Insertion par lots de 500 pour rester raisonnable côté API. Sur
+  // conflit de cle_unique (relance du script apres une premiere passe
+  // partielle), on ignore la ligne plutot que planter tout le lot.
   const BATCH_SIZE = 500;
   for (let i = 0; i < toInsert.length; i += BATCH_SIZE) {
     const batch = toInsert.slice(i, i + BATCH_SIZE);
-    const { error } = await supabase.from("reservations").insert(batch);
+    const { error } = await supabase
+      .from("reservations")
+      .upsert(batch, { onConflict: "cle_unique", ignoreDuplicates: true });
     if (error) {
       errors += batch.length;
       console.error(`  [erreur lot ${i}-${i + batch.length}]:`, error.message);
@@ -243,7 +303,9 @@ async function migrateReservations(supabase, csvPath, dryRun) {
     }
   }
 
-  console.log(`Reservations : ${inserted} insérées, ${orphans} orphelines, ${errors} erreurs.`);
+  console.log(
+    `Reservations : ${inserted} traitées (insérées ou déjà présentes), ${orphans} orphelines, ${skippedDates} dates invalides, ${errors} erreurs.`
+  );
 }
 
 async function main() {
@@ -271,15 +333,14 @@ async function main() {
     console.log(">>> MODE DRY-RUN : aucune écriture ne sera faite <<<");
   }
 
-  // Logements avant Reservations : les reservations dépendent des
-  // properties déjà backfillées (pour l'instant on ne lit que
-  // cle_unique_airtable qui existe déjà, donc l'ordre n'est pas bloquant,
-  // mais on garde une exécution séquentielle lisible).
+  const byNormalizedKey = await loadPropertiesByNormalizedKey(supabase);
+  console.log(`${byNormalizedKey.size} logements Supabase chargés pour la résolution.`);
+
   if (args.logements) {
-    await migrateLogements(supabase, args.logements, args.dryRun);
+    await migrateLogements(supabase, args.logements, byNormalizedKey, args.dryRun);
   }
   if (args.reservations) {
-    await migrateReservations(supabase, args.reservations, args.dryRun);
+    await migrateReservations(supabase, args.reservations, byNormalizedKey, args.dryRun);
   }
 
   console.log("\nTerminé.");

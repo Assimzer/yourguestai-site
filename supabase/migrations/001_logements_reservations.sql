@@ -26,7 +26,7 @@ alter table public.properties
   add column if not exists checkin_heure text,
   add column if not exists checkout_heure text,
   add column if not exists parking_info text,
-  add column if not exists consignes_arrivee text,
+  add column if not exists instructions_arrivee text,
   add column if not exists regles_maison text,
   add column if not exists recommandations text,
   add column if not exists contact_urgence text,
