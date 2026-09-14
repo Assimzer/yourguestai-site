@@ -116,7 +116,7 @@ function parseArgs(argv) {
 
 function readCsv(path) {
   const raw = readFileSync(path, "utf-8");
-  return parse(raw, { columns: true, skip_empty_lines: true, trim: true });
+  return parse(raw, { columns: true, skip_empty_lines: true, trim: true, bom: true });
 }
 
 // Convertit une date Airtable (souvent "2026-09-14" ou avec heure) en
