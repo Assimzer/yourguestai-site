@@ -34,12 +34,11 @@ export default function PolitiqueConfidentialitePage() {
           <h2 className="font-display text-lg text-white">Sous-traitants</h2>
           <p className="mt-2">
             Google Gemini (via OpenRouter) pour la génération des réponses,
-            Airtable pour le stockage opérationnel, n8n pour
-            l&apos;automatisation, Meta (WhatsApp Business Platform) pour
-            l&apos;acheminement des messages, Supabase pour
-            l&apos;authentification, Vercel pour l&apos;hébergement, Stripe
-            pour les paiements. La liste détaillée et à jour est disponible
-            sur la page{" "}
+            n8n pour l&apos;automatisation, Meta (WhatsApp Business Platform)
+            pour l&apos;acheminement des messages, Supabase pour
+            l&apos;authentification et le stockage opérationnel, OVH pour
+            l&apos;hébergement, Stripe pour les paiements. La liste détaillée
+            et à jour est disponible sur la page{" "}
             <Link href="/sous-traitants" className="underline decoration-night-600 underline-offset-4 hover:text-white">
               Sous-traitants
             </Link>

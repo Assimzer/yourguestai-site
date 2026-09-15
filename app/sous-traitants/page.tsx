@@ -23,12 +23,6 @@ const subprocessors = [
     guarantee: "Clauses contractuelles types (CCT)",
   },
   {
-    name: "Airtable, Inc.",
-    service: "Stockage des logements, réservations et conversations",
-    country: "États-Unis",
-    guarantee: "Clauses contractuelles types (CCT)",
-  },
-  {
     name: "n8n GmbH",
     service: "Orchestration des automatisations et de l'agent conversationnel",
     country: "Union européenne",
@@ -36,7 +30,8 @@ const subprocessors = [
   },
   {
     name: "Supabase, Inc.",
-    service: "Authentification et données du compte hôte",
+    service:
+      "Authentification, données du compte hôte, logements, réservations et conversations",
     country: "États-Unis",
     guarantee: "Clauses contractuelles types (CCT)",
   },
@@ -63,7 +58,7 @@ export default function SousTraitantsPage() {
         Liste des sous-traitants
       </h1>
       <p className="mt-2 text-sm text-mist-500">
-        Dernière mise à jour : 8 septembre 2026 · Version 1.0
+        Dernière mise à jour : 15 septembre 2026 · Version 1.1
       </p>
 
       <div className="mt-8 space-y-6 text-sm leading-relaxed text-mist-300">

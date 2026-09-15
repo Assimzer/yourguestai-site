@@ -158,10 +158,9 @@ export default function DpaPage() {
           <ul className="mt-2 list-disc space-y-1 pl-5">
             <li>Meta Platforms Ireland Ltd — WhatsApp Business Platform, messagerie</li>
             <li>OpenRouter, Inc. (relayant vers Google Gemini) — traitement du langage naturel</li>
-            <li>Airtable, Inc. — stockage opérationnel des logements et conversations</li>
             <li>n8n GmbH — orchestration des automatisations</li>
-            <li>Supabase, Inc. — authentification et données de compte</li>
-            <li>Vercel Inc. — hébergement du site et du tableau de bord</li>
+            <li>Supabase, Inc. — authentification, données de compte, logements et conversations</li>
+            <li>OVH SAS — hébergement du site et du tableau de bord (serveur VPS)</li>
             <li>Stripe, Inc. / Stripe Payments Europe Ltd — gestion des paiements</li>
           </ul>
           <p className="mt-2">
