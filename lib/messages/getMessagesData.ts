@@ -132,55 +132,31 @@ export async function getMessagesData(
 
   const idLogements = properties.map((p) => p.cle_unique_airtable);
   const propertyIds = properties.map((p) => p.id);
-  const webhookBody = JSON.stringify({ id_logements: idLogements });
 
-  // Les messages restent lus via n8n (table Messages) ; les reservations
-  // sont maintenant lues directement dans Supabase (table `reservations`) —
-  // on lance les deux en parallele plutot qu'en sequence.
+  // Messages et reservations sont maintenant tous les deux lus directement
+  // dans Supabase — plus de webhook n8n ici, on lance les deux requetes en
+  // parallele plutot qu'en sequence.
   const [messagesResult, reservationsResult] = await Promise.allSettled([
-    fetch(process.env.N8N_MESSAGES_WEBHOOK_URL!, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Webhook-Secret": process.env.N8N_WEBHOOK_SECRET!,
-      },
-      body: webhookBody,
-    }),
+    supabase
+      .from("messages")
+      .select("id, id_logement, telephone, date, sens, escalade")
+      .in("id_logement", idLogements),
     supabase
       .from("reservations")
       .select("logement_id, telephone_voyageur, date_debut, date_fin")
       .in("logement_id", propertyIds),
   ]);
 
-  if (messagesResult.status === "rejected") {
-    return { ok: false, error: "Impossible de contacter n8n", status: 502 };
-  }
-
-  const n8nRes = messagesResult.value;
-  if (!n8nRes.ok) {
+  if (messagesResult.status === "rejected" || messagesResult.value.error) {
     return {
       ok: false,
-      error: "Erreur n8n lors du chargement des messages",
-      status: 502,
+      error: "Impossible de charger vos messages",
+      status: 500,
     };
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let data: { messages?: any[] };
-  try {
-    data = await n8nRes.json();
-  } catch {
-    // Réponse n8n vide ou non-JSON : on ne fait pas planter la page, on
-    // affiche juste une liste vide de messages pour cette fois.
-    return {
-      ok: true,
-      messages: [],
-      by_logement: [],
-      daily: [],
-      previous_period_message_count: 0,
-      recent_escalades: [],
-    };
-  }
+  const data: { messages: any[] } = { messages: messagesResult.value.data ?? [] };
 
   const byIdLogement = new Map(
     properties.map((p) => [normalize(p.cle_unique_airtable), p])

@@ -14,7 +14,7 @@ export async function POST(request: Request) {
   }
 
   // Verifie que ce logement appartient bien a l'hote connecte avant de
-  // repercuter quoi que ce soit dans Airtable via n8n.
+  // supprimer quoi que ce soit.
   const { data: property, error } = await supabase
     .from("properties")
     .select("id, host_id")
@@ -26,10 +26,9 @@ export async function POST(request: Request) {
   }
 
   // Recharge les conversations de cet hote pour retrouver les identifiants
-  // Airtable exacts des messages a supprimer. On evite ainsi de faire
-  // rechercher la ligne par n8n via une formule texte (id_logement/telephone)
-  // qui peut echouer silencieusement a cause d'un caractere invisible cache
-  // dans la donnee Airtable — un id Airtable, lui, est toujours exact.
+  // exacts (uuid Supabase) des messages a supprimer, plutot que de filtrer
+  // par id_logement/telephone directement (comparaison de texte qui pourrait
+  // matcher des lignes d'un autre hote en cas de collision).
   const data = await getMessagesData(supabase, user.id);
   if (!data.ok) {
     return NextResponse.json({ error: data.error }, { status: data.status });
@@ -47,34 +46,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, deleted: 0 });
   }
 
-  const webhookUrl = process.env.N8N_DELETE_MESSAGES_WEBHOOK_URL;
-  if (!webhookUrl) {
+  const { error: deleteError } = await supabase
+    .from("messages")
+    .delete()
+    .in("id", messageIds);
+
+  if (deleteError) {
     return NextResponse.json(
-      { error: "N8N_DELETE_MESSAGES_WEBHOOK_URL manquant côté serveur" },
+      { error: "Échec de la suppression" },
       { status: 500 }
-    );
-  }
-
-  try {
-    const res = await fetch(webhookUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-Webhook-Secret": process.env.N8N_WEBHOOK_SECRET!,
-      },
-      body: JSON.stringify({ message_ids: messageIds }),
-    });
-
-    if (!res.ok) {
-      return NextResponse.json(
-        { error: `Échec de la suppression (n8n: ${res.status})` },
-        { status: 502 }
-      );
-    }
-  } catch (err) {
-    return NextResponse.json(
-      { error: `Impossible de contacter n8n : ${(err as Error).message}` },
-      { status: 502 }
     );
   }
 
