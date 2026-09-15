@@ -9,7 +9,6 @@ type Reservation = {
   logement: string;
   nom_voyageur: string;
   telephone_voyageur: string;
-  code_conv: string;
   date_debut: string;
   date_fin: string;
 };

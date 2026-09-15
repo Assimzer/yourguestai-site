@@ -7,7 +7,6 @@ export type Reservation = {
   logement: string;
   nom_voyageur: string;
   telephone_voyageur: string;
-  code_conv: string;
   date_debut: string;
   date_fin: string;
 };
@@ -33,7 +32,7 @@ export async function getReservationsData(
   const { data, error } = await supabase
     .from("reservations")
     .select(
-      "id, cle_unique, code_conv, nom_voyageur, telephone_voyageur, date_debut, date_fin, logement_id, properties(nom)"
+      "id, cle_unique, nom_voyageur, telephone_voyageur, date_debut, date_fin, logement_id, properties(nom)"
     )
     .order("date_debut", { ascending: true });
 
@@ -49,7 +48,6 @@ export async function getReservationsData(
     (r: {
       id: string;
       cle_unique: string;
-      code_conv: string | null;
       nom_voyageur: string | null;
       telephone_voyageur: string | null;
       date_debut: string;
@@ -65,7 +63,6 @@ export async function getReservationsData(
         logement: property?.nom ?? "",
         nom_voyageur: r.nom_voyageur ?? "",
         telephone_voyageur: r.telephone_voyageur ?? "",
-        code_conv: r.code_conv ?? "",
         date_debut: r.date_debut ?? "",
         date_fin: r.date_fin ?? "",
       };
