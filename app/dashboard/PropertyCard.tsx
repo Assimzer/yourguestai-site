@@ -39,12 +39,16 @@ export default function PropertyCard({
   const [renameError, setRenameError] = useState<string | null>(null);
   const [showShare, setShowShare] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [codeLogement, setCodeLogement] = useState(property.code_logement);
+  const [regenerating, setRegenerating] = useState(false);
+  const [confirmingRegenerate, setConfirmingRegenerate] = useState(false);
+  const [regenerateError, setRegenerateError] = useState<string | null>(null);
 
   // Meme numero WhatsApp que WhatsappQrCard.tsx : un seul numero pour tous
   // les logements, le voyageur est identifie via le code_logement pre-rempli
   // dans le lien plutot que par le numero appele.
-  const shareLink = property.code_logement
-    ? `https://wa.me/33624099289?text=${encodeURIComponent(property.code_logement)}`
+  const shareLink = codeLogement
+    ? `https://wa.me/33624099289?text=${encodeURIComponent(codeLogement)}`
     : null;
 
   async function copyShareLink() {
@@ -55,6 +59,26 @@ export default function PropertyCard({
       setTimeout(() => setLinkCopied(false), 2000);
     } catch {
       // Presse-papiers indisponible : le lien reste affiche et selectionnable a la main.
+    }
+  }
+
+  async function handleRegenerateCode() {
+    setRegenerating(true);
+    setRegenerateError(null);
+    try {
+      const res = await fetch("/api/regenerate-code-logement", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ property_id: property.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Échec de la génération");
+      setCodeLogement(data.code_logement);
+      setConfirmingRegenerate(false);
+    } catch (e) {
+      setRegenerateError(e instanceof Error ? e.message : "Erreur inconnue");
+    } finally {
+      setRegenerating(false);
     }
   }
 
@@ -312,9 +336,7 @@ export default function PropertyCard({
             Collez ce lien dans le message automatique d&apos;accueil Airbnb
             (ou Booking). Le voyageur n&apos;aura qu&apos;à cliquer : WhatsApp
             s&apos;ouvre avec le code{" "}
-            <span className="font-mono text-porch-400">
-              {property.code_logement}
-            </span>{" "}
+            <span className="font-mono text-porch-400">{codeLogement}</span>{" "}
             déjà prêt à être envoyé.
           </p>
           <div className="mt-2 flex gap-2">
@@ -332,6 +354,43 @@ export default function PropertyCard({
               {linkCopied ? "Copié ✓" : "Copier"}
             </button>
           </div>
+
+          {!confirmingRegenerate ? (
+            <button
+              type="button"
+              onClick={() => setConfirmingRegenerate(true)}
+              className="mt-3 text-xs text-mist-400 underline decoration-night-600 underline-offset-4 hover:text-white"
+            >
+              Générer un nouveau code
+            </button>
+          ) : (
+            <div className="mt-3 rounded-lg border border-warn/30 bg-warn/10 p-2.5">
+              <p className="text-xs text-white">
+                L&apos;ancien code ({codeLogement}) ne fonctionnera plus. Mets
+                à jour le lien collé dans ton message Airbnb/Booking après
+                cette action.
+              </p>
+              <div className="mt-2 flex gap-2">
+                <button
+                  onClick={handleRegenerateCode}
+                  disabled={regenerating}
+                  className="rounded-md bg-warn px-3 py-1.5 text-xs font-semibold text-night-950 transition hover:opacity-90 disabled:opacity-60"
+                >
+                  {regenerating ? "Génération…" : "Confirmer"}
+                </button>
+                <button
+                  onClick={() => setConfirmingRegenerate(false)}
+                  disabled={regenerating}
+                  className="rounded-md border border-night-600 px-3 py-1.5 text-xs text-mist-400 transition hover:text-white"
+                >
+                  Annuler
+                </button>
+              </div>
+              {regenerateError && (
+                <p className="mt-1.5 text-xs text-warn">{regenerateError}</p>
+              )}
+            </div>
+          )}
         </div>
       )}
 
