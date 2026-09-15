@@ -122,9 +122,35 @@ export default function ReservationsList({
     // Ne rien faire si la valeur n'a pas changé (évite un appel réseau inutile
     // à chaque clic hors du champ).
     if (nom === r.nom_voyageur) return;
+    await updateReservation(r, { nom_voyageur: nom });
+  }
 
+  async function updateDateDebut(r: Reservation, dateDebut: string) {
+    if (!dateDebut || dateDebut === r.date_debut.slice(0, 10)) return;
+    if (dateDebut > r.date_fin.slice(0, 10)) {
+      alert("La date d'arrivée doit être avant la date de départ.");
+      await load();
+      return;
+    }
+    await updateReservation(r, { date_debut: dateDebut });
+  }
+
+  async function updateDateFin(r: Reservation, dateFin: string) {
+    if (!dateFin || dateFin === r.date_fin.slice(0, 10)) return;
+    if (dateFin < r.date_debut.slice(0, 10)) {
+      alert("La date de départ doit être après la date d'arrivée.");
+      await load();
+      return;
+    }
+    await updateReservation(r, { date_fin: dateFin });
+  }
+
+  async function updateReservation(
+    r: Reservation,
+    patch: Partial<Pick<Reservation, "nom_voyageur" | "date_debut" | "date_fin">>
+  ) {
     setReservations((prev) =>
-      prev.map((res) => (res.id === r.id ? { ...res, nom_voyageur: nom } : res))
+      prev.map((res) => (res.id === r.id ? { ...res, ...patch } : res))
     );
     setSavingId(r.id);
     setSavedId(null);
@@ -136,7 +162,7 @@ export default function ReservationsList({
         body: JSON.stringify({
           property_id: r.property_id,
           cle_unique: r.cle_unique,
-          nom_voyageur: nom,
+          ...patch,
         }),
       });
       if (!res.ok) throw new Error();
@@ -145,6 +171,7 @@ export default function ReservationsList({
     } catch {
       // Laisse la valeur affichée telle quelle mais n'affiche pas de
       // confirmation — l'hôte peut réessayer en cliquant à nouveau hors du champ.
+      await load();
     } finally {
       setSavingId(null);
     }
@@ -380,10 +407,26 @@ export default function ReservationsList({
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="font-display text-sm text-white">{r.logement}</p>
-                    <p className="mt-0.5 text-xs text-mist-400">
-                      Arrivée {formatDate(r.date_debut)} — Départ{" "}
-                      {formatDate(r.date_fin)}
-                    </p>
+                    <div className="mt-1.5 flex items-center gap-2 text-xs text-mist-400">
+                      <label className="flex items-center gap-1">
+                        Arrivée
+                        <input
+                          type="date"
+                          defaultValue={r.date_debut.slice(0, 10)}
+                          onBlur={(e) => updateDateDebut(r, e.target.value)}
+                          className="rounded-lg border border-night-600 bg-night-950 px-2 py-1 text-xs text-white focus:border-porch-500 focus:outline-none"
+                        />
+                      </label>
+                      <label className="flex items-center gap-1">
+                        Départ
+                        <input
+                          type="date"
+                          defaultValue={r.date_fin.slice(0, 10)}
+                          onBlur={(e) => updateDateFin(r, e.target.value)}
+                          className="rounded-lg border border-night-600 bg-night-950 px-2 py-1 text-xs text-white focus:border-porch-500 focus:outline-none"
+                        />
+                      </label>
+                    </div>
                   </div>
 
                   <div className="flex items-center gap-2">
