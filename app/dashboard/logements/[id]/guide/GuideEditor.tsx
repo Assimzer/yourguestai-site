@@ -470,7 +470,7 @@ export default function GuideEditor({
             rows={5}
             value={fields.recommandations}
             onChange={set("recommandations")}
-            placeholder="Restaurant La Finette (spécialités jurassiennes), Vignoble des Deux Terres (vins nature)…"
+            placeholder="Bistrot Paul Bert (cuisine française traditionnelle), Marché d'Aligre (marché couvert et brocante le matin)…"
           />
         </Field>
       </Section>
@@ -482,7 +482,7 @@ export default function GuideEditor({
             type="text"
             value={fields.contact_urgence}
             onChange={set("contact_urgence")}
-            placeholder="0781635224"
+            placeholder="0612345678"
           />
         </Field>
       </Section>
