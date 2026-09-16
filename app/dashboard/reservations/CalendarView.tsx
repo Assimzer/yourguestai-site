@@ -78,6 +78,7 @@ export default function CalendarView({
   const today = new Date();
   const [cursor, setCursor] = useState(() => new Date(today.getFullYear(), today.getMonth(), 1));
   const [selected, setSelected] = useState<Reservation | null>(null);
+  const [expandedDay, setExpandedDay] = useState<string | null>(null);
 
   const logements = useMemo(
     () => Array.from(new Set(reservations.map((r) => r.logement))).sort(),
@@ -211,9 +212,13 @@ export default function CalendarView({
                     );
                   })}
                   {hiddenCount > 0 && (
-                    <span className="px-1.5 text-[11px] text-mist-500">
+                    <button
+                      type="button"
+                      onClick={() => setExpandedDay(key)}
+                      className="self-start px-1.5 text-[11px] text-mist-400 underline decoration-dotted hover:text-white"
+                    >
                       +{hiddenCount} autre{hiddenCount > 1 ? "s" : ""}
-                    </span>
+                    </button>
                   )}
                 </div>
               </div>
@@ -221,6 +226,53 @@ export default function CalendarView({
           })}
         </div>
       </div>
+
+      {expandedDay && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-night-950/70 p-4"
+          onClick={() => setExpandedDay(null)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="flex max-h-[80vh] w-full max-w-sm flex-col rounded-2xl border border-night-600 bg-night-900 p-5"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <p className="font-display text-lg capitalize text-white">
+                {formatDate(expandedDay)}
+              </p>
+              <button
+                type="button"
+                onClick={() => setExpandedDay(null)}
+                aria-label="Fermer"
+                className="text-mist-500 hover:text-white"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="mt-3 flex flex-col gap-2 overflow-y-auto">
+              {(reservationsByDay.get(expandedDay) ?? []).map((r) => (
+                <button
+                  key={r.id}
+                  type="button"
+                  onClick={() => {
+                    setSelected(r);
+                    setExpandedDay(null);
+                  }}
+                  className="flex items-center gap-2 rounded-lg border border-night-700 px-3 py-2 text-left text-sm transition hover:bg-night-800"
+                >
+                  <span
+                    className={`h-2.5 w-2.5 shrink-0 rounded-full ${colorByLogement.get(r.logement)}`}
+                  />
+                  <span className="flex flex-col">
+                    <span className="text-white">{r.logement}</span>
+                    <span className="text-xs text-mist-400">{r.nom_voyageur || "—"}</span>
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {selected && (
         <div
