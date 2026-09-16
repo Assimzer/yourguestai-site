@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
+import CalendarView from "./CalendarView";
 
 type Reservation = {
   id: string;
@@ -101,6 +102,7 @@ export default function ReservationsList({
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [page, setPage] = useState(1);
+  const [view, setView] = useState<"liste" | "calendrier">("liste");
 
   async function load() {
     setLoading(true);
@@ -334,11 +336,24 @@ export default function ReservationsList({
     );
   }
 
+  const calendarReservations =
+    logementFilter === "tous"
+      ? reservations
+      : reservations.filter((r) => r.logement === logementFilter);
+
   return (
     <div className="flex flex-col gap-6">
       {createSection}
 
       <div className="flex flex-wrap items-end gap-3 rounded-2xl border border-night-600 bg-night-900 p-4">
+        <button
+          type="button"
+          onClick={() => setView((v) => (v === "liste" ? "calendrier" : "liste"))}
+          className="self-end rounded-lg border border-night-600 bg-night-800 px-3 py-1.5 text-sm font-medium text-mist-200 transition hover:bg-night-700"
+        >
+          {view === "liste" ? "📅 Afficher le calendrier" : "☰ Afficher la liste"}
+        </button>
+
         <label className="flex flex-col gap-1">
           <span className="text-xs text-mist-400">Logement</span>
           <select
@@ -355,25 +370,29 @@ export default function ReservationsList({
           </select>
         </label>
 
-        <label className="flex flex-col gap-1">
-          <span className="text-xs text-mist-400">Du</span>
-          <input
-            type="date"
-            value={dateFrom}
-            onChange={(e) => setDateFrom(e.target.value)}
-            className="rounded-lg border border-night-600 bg-night-800 px-3 py-1.5 text-sm text-white"
-          />
-        </label>
+        {view === "liste" && (
+          <>
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-mist-400">Du</span>
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={(e) => setDateFrom(e.target.value)}
+                className="rounded-lg border border-night-600 bg-night-800 px-3 py-1.5 text-sm text-white"
+              />
+            </label>
 
-        <label className="flex flex-col gap-1">
-          <span className="text-xs text-mist-400">Au</span>
-          <input
-            type="date"
-            value={dateTo}
-            onChange={(e) => setDateTo(e.target.value)}
-            className="rounded-lg border border-night-600 bg-night-800 px-3 py-1.5 text-sm text-white"
-          />
-        </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-mist-400">Au</span>
+              <input
+                type="date"
+                value={dateTo}
+                onChange={(e) => setDateTo(e.target.value)}
+                className="rounded-lg border border-night-600 bg-night-800 px-3 py-1.5 text-sm text-white"
+              />
+            </label>
+          </>
+        )}
 
         {hasActiveFilters && (
           <button
@@ -389,7 +408,9 @@ export default function ReservationsList({
         )}
       </div>
 
-      {filtered.length === 0 ? (
+      {view === "calendrier" ? (
+        <CalendarView reservations={calendarReservations} />
+      ) : filtered.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-night-600 px-6 py-12 text-center">
           <p className="text-sm text-mist-400">
             Aucune réservation ne correspond à ces filtres.
