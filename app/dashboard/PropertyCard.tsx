@@ -10,6 +10,7 @@ type Property = {
   actif: boolean;
   ical_url: string | null;
   code_logement: string | null;
+  demande_avis: boolean;
 };
 
 export default function PropertyCard({
@@ -25,6 +26,8 @@ export default function PropertyCard({
 }) {
   const router = useRouter();
   const [actif, setActif] = useState(property.actif);
+  const [demandeAvis, setDemandeAvis] = useState(property.demande_avis);
+  const [togglingAvis, setTogglingAvis] = useState(false);
   const [icalUrl, setIcalUrl] = useState(property.ical_url ?? "");
   const [toggling, setToggling] = useState(false);
   const [savingIcal, setSavingIcal] = useState(false);
@@ -103,6 +106,21 @@ export default function PropertyCard({
       }
     }
     setToggling(false);
+  }
+
+  async function handleToggleAvis() {
+    const next = !demandeAvis;
+    setTogglingAvis(true);
+    setDemandeAvis(next); // optimiste
+
+    const res = await fetch("/api/toggle-avis", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ property_id: property.id, demande_avis: next }),
+    });
+
+    if (!res.ok) setDemandeAvis(demandeAvis); // rollback si echec
+    setTogglingAvis(false);
   }
 
   async function handleIcalSubmit(e: React.FormEvent) {
@@ -246,6 +264,21 @@ export default function PropertyCard({
               }`}
             />
             {actif ? "LÉO actif" : "LÉO en pause"}
+          </button>
+
+          <button
+            onClick={handleToggleAvis}
+            disabled={togglingAvis}
+            aria-pressed={demandeAvis}
+            title="Envoyer un message de remerciement + demande d'avis à la fin du séjour"
+            className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium transition disabled:opacity-60 ${
+              demandeAvis
+                ? "border-porch-500/40 bg-porch-500/10 text-porch-400"
+                : "border-night-600 bg-night-800 text-mist-500"
+            }`}
+          >
+            <span>⭐</span>
+            {demandeAvis ? "Avis activé" : "Avis désactivé"}
           </button>
 
           <button
