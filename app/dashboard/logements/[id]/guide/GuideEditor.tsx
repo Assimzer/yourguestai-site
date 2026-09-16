@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 
 type GuideFields = {
   adresse: string;
+  ville: string;
   photo_url: string;
   checkin_heure: string;
   checkout_heure: string;
@@ -23,6 +24,7 @@ type GuideFields = {
 
 const EMPTY: GuideFields = {
   adresse: "",
+  ville: "",
   photo_url: "",
   checkin_heure: "",
   checkout_heure: "",
@@ -41,6 +43,7 @@ const EMPTY: GuideFields = {
 
 type AddressSuggestion = {
   label: string;
+  city: string;
 };
 
 export default function GuideEditor({
@@ -78,6 +81,7 @@ export default function GuideEditor({
         const f = data.fields ?? {};
         setFields({
           adresse: f.adresse ?? "",
+          ville: f.ville ?? "",
           photo_url: f.photo_url ?? "",
           checkin_heure: f.checkin_heure ?? "",
           checkout_heure: f.checkout_heure ?? "",
@@ -129,7 +133,10 @@ export default function GuideEditor({
         if (!res.ok) return;
         const data = await res.json();
         const suggestions: AddressSuggestion[] = (data.features ?? []).map(
-          (f: { properties: { label: string } }) => ({ label: f.properties.label })
+          (f: { properties: { label: string; city?: string } }) => ({
+            label: f.properties.label,
+            city: f.properties.city ?? "",
+          })
         );
         setAddressSuggestions(suggestions);
         setShowSuggestions(suggestions.length > 0);
@@ -139,8 +146,12 @@ export default function GuideEditor({
     }, 300);
   }
 
-  function selectAddress(label: string) {
-    setFields((prev) => ({ ...prev, adresse: label }));
+  function selectAddress(suggestion: AddressSuggestion) {
+    setFields((prev) => ({
+      ...prev,
+      adresse: suggestion.label,
+      ville: suggestion.city || prev.ville,
+    }));
     setShowSuggestions(false);
     setAddressSuggestions([]);
   }
@@ -267,7 +278,7 @@ export default function GuideEditor({
                   <button
                     type="button"
                     onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => selectAddress(s.label)}
+                    onClick={() => selectAddress(s)}
                     className="block w-full px-3 py-2 text-left text-sm text-mist-300 hover:bg-night-700 hover:text-white"
                   >
                     {s.label}
