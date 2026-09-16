@@ -119,6 +119,21 @@ export default function PricingSection() {
           </div>
         ))}
       </div>
+
+      <div className="mt-10 flex flex-wrap justify-center gap-x-8 gap-y-3 text-xs text-mist-400">
+        <span className="flex items-center gap-1.5">
+          <span className="text-porch-400">🔒</span>
+          Conforme RGPD — données hébergées en France
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="text-porch-400">⚡</span>
+          Notification immédiate au propriétaire si LÉO ne peut pas répondre
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="text-porch-400">🇫🇷</span>
+          Support humain par WhatsApp
+        </span>
+      </div>
     </>
   );
 }

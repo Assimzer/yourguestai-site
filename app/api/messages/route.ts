@@ -26,6 +26,7 @@ export async function GET() {
       daily: result.daily,
       previous_period_message_count: result.previous_period_message_count,
       recent_escalades: result.recent_escalades,
+      reliability: result.reliability,
     },
     { headers: { "Cache-Control": "no-store" } }
   );
