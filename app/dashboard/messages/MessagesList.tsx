@@ -326,6 +326,17 @@ export default function MessagesList({
                       >
                         {badge.label}
                       </span>
+                      <a
+                        href={`/api/messages/export?property_id=${encodeURIComponent(
+                          c.property_id
+                        )}&telephone=${encodeURIComponent(c.telephone)}`}
+                        title="Exporter l'historique (CSV)"
+                        className="rounded-full border border-night-600 p-1.5 text-mist-500 transition hover:border-porch-400/40 hover:text-porch-400"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M12 3v12m0 0-4-4m4 4 4-4M4 21h16" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </a>
                       <button
                         type="button"
                         onClick={() => {

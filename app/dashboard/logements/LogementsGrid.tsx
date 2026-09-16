@@ -9,6 +9,7 @@ type Property = {
   actif: boolean;
   ical_url: string | null;
   code_logement: string | null;
+  demande_avis: boolean;
 };
 
 export default function LogementsGrid({ properties }: { properties: Property[] }) {

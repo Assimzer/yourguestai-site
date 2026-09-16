@@ -27,6 +27,7 @@ export async function POST(request: Request) {
   // ne redirige la mise à jour vers le logement d'un autre hôte.
   const {
     adresse,
+    ville,
     photo_url,
     checkin_heure,
     checkout_heure,
@@ -47,6 +48,7 @@ export async function POST(request: Request) {
     .from("properties")
     .update({
       adresse,
+      ville,
       photo_url,
       checkin_heure,
       checkout_heure,

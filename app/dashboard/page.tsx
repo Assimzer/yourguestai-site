@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import MessagesActivityChart from "./MessagesActivityChart";
+import ReliabilityStats from "./ReliabilityStats";
 import WhatsappQrCard from "./WhatsappQrCard";
+import StatCard from "./StatCard";
 
 export default async function DashboardOverview() {
   const supabase = createClient();
@@ -31,6 +33,8 @@ export default async function DashboardOverview() {
         <StatCard label="LÉO actif" value={actifs} accent="ok" />
         <StatCard label="En pause" value={enPause} accent="mist" />
       </div>
+
+      {total > 0 && <ReliabilityStats />}
 
       {total > 0 && <MessagesActivityChart />}
 
@@ -62,29 +66,6 @@ export default async function DashboardOverview() {
           </Link>
         </div>
       )}
-    </div>
-  );
-}
-
-function StatCard({
-  label,
-  value,
-  accent,
-}: {
-  label: string;
-  value: number;
-  accent?: "ok" | "mist";
-}) {
-  return (
-    <div className="rounded-2xl border border-night-600 bg-night-900 p-5">
-      <p className="text-xs text-mist-400">{label}</p>
-      <p
-        className={`mt-2 font-display text-3xl ${
-          accent === "ok" ? "text-ok" : accent === "mist" ? "text-mist-400" : "text-white"
-        }`}
-      >
-        {value}
-      </p>
     </div>
   );
 }

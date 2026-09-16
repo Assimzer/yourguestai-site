@@ -37,6 +37,16 @@ export type RecentEscalade = {
   date: string;
 };
 
+export type Reliability = {
+  // Temps moyen entre un message entrant (voyageur) et la reponse sortante
+  // (LEO) suivante, en secondes. `null` si pas assez de donnees.
+  avg_response_seconds: number | null;
+  // Part des conversations resolues sans aucune escalade au proprietaire
+  // (0-1). `null` si aucune conversation sur la periode chargee.
+  automation_rate: number | null;
+  conversation_count: number;
+};
+
 type ReservationLike = {
   id_logement: string;
   telephone_voyageur?: string;
@@ -52,6 +62,7 @@ type Result =
       daily: DailyBucket[];
       previous_period_message_count: number;
       recent_escalades: RecentEscalade[];
+      reliability: Reliability;
     }
   | { ok: false; error: string; status: number };
 
@@ -127,6 +138,7 @@ export async function getMessagesData(
       daily: [],
       previous_period_message_count: 0,
       recent_escalades: [],
+      reliability: { avg_response_seconds: null, automation_rate: null, conversation_count: 0 },
     };
   }
 
@@ -357,6 +369,51 @@ export async function getMessagesData(
       date: m.date,
     }));
 
+  // Fiabilite : temps de reponse moyen (entrant -> prochain sortant dans la
+  // meme conversation) et part des conversations resolues sans escalade.
+  // Sert au badge de fiabilite affiche sur le tableau de bord.
+  // Comparaison tolerante (casse, espaces) : memes regles que sensBadge()
+  // dans MessagesList.tsx, pour rester coherent avec ce qui est deja affiche
+  // a l'hote plutot que de dependre d'une valeur exacte "entrant"/"sortant".
+  const isEntrant = (sens: string) => (sens || "").toLowerCase().includes("entrant");
+  const isSortant = (sens: string) => (sens || "").toLowerCase().includes("sortant");
+
+  const responseTimesMs: number[] = [];
+  const byConversationSorted = new Map<string, typeof rawMessages>();
+  for (const m of rawMessages) {
+    const key = `${m.telephone}__${m.logement}`;
+    const list = byConversationSorted.get(key);
+    if (list) list.push(m);
+    else byConversationSorted.set(key, [m]);
+  }
+  for (const list of byConversationSorted.values()) {
+    const sorted = [...list].sort((a, b) => a.date.localeCompare(b.date));
+    for (let i = 0; i < sorted.length - 1; i++) {
+      if (!isEntrant(sorted[i].sens)) continue;
+      // Cherche le prochain message sortant qui suit ce message entrant.
+      for (let j = i + 1; j < sorted.length; j++) {
+        if (isSortant(sorted[j].sens)) {
+          const delta = new Date(sorted[j].date).getTime() - new Date(sorted[i].date).getTime();
+          if (Number.isFinite(delta) && delta > 0) responseTimesMs.push(delta);
+          break;
+        }
+        if (isEntrant(sorted[j].sens)) break;
+      }
+    }
+  }
+  const avg_response_seconds =
+    responseTimesMs.length > 0
+      ? Math.round(
+          responseTimesMs.reduce((sum, ms) => sum + ms, 0) / responseTimesMs.length / 1000
+        )
+      : null;
+
+  const conversation_count = messages.length;
+  const automation_rate =
+    conversation_count > 0
+      ? messages.filter((c) => c.escalade_count === 0).length / conversation_count
+      : null;
+
   return {
     ok: true,
     messages,
@@ -364,5 +421,6 @@ export async function getMessagesData(
     daily,
     previous_period_message_count,
     recent_escalades,
+    reliability: { avg_response_seconds, automation_rate, conversation_count },
   };
 }
