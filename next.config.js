@@ -16,9 +16,16 @@ const nextConfig = {
     // connecter" qui se contente de recharger la page sans rien afficher.
     // Jamais necessaire ni ajoute en production.
     const isDev = process.env.NODE_ENV !== "production";
+    // Meta Pixel et Microsoft Clarity : charges uniquement avec le
+    // consentement cookies (voir AnalyticsScripts.tsx), mais doivent quand
+    // meme etre autorises ici sinon la CSP bloque leur chargement.
+    const analyticsScriptSrc =
+      "https://connect.facebook.net https://www.clarity.ms";
+    const analyticsConnectSrc =
+      "https://www.facebook.com https://*.clarity.ms";
     const scriptSrc = isDev
-      ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cloud.umami.is"
-      : "script-src 'self' 'unsafe-inline' https://cloud.umami.is";
+      ? `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cloud.umami.is ${analyticsScriptSrc}`
+      : `script-src 'self' 'unsafe-inline' https://cloud.umami.is ${analyticsScriptSrc}`;
 
     const csp = [
       "default-src 'self'",
@@ -26,7 +33,7 @@ const nextConfig = {
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: https:",
       "font-src 'self' data:",
-      `connect-src 'self' ${process.env.NEXT_PUBLIC_SUPABASE_URL || ""} https://api-adresse.data.gouv.fr https://cloud.umami.is https://gateway.umami.is`,
+      `connect-src 'self' ${process.env.NEXT_PUBLIC_SUPABASE_URL || ""} https://api-adresse.data.gouv.fr https://cloud.umami.is https://gateway.umami.is ${analyticsConnectSrc}`,
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",
