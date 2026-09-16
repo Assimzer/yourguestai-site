@@ -20,12 +20,12 @@ const nextConfig = {
     // consentement cookies (voir AnalyticsScripts.tsx), mais doivent quand
     // meme etre autorises ici sinon la CSP bloque leur chargement.
     const analyticsScriptSrc =
-      "https://connect.facebook.net https://www.clarity.ms";
+      "https://connect.facebook.net https://*.clarity.ms";
     const analyticsConnectSrc =
       "https://www.facebook.com https://*.clarity.ms";
     const scriptSrc = isDev
-      ? `script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cloud.umami.is ${analyticsScriptSrc}`
-      : `script-src 'self' 'unsafe-inline' https://cloud.umami.is ${analyticsScriptSrc}`;
+      ? `script-src 'self' 'unsafe-inline' 'unsafe-eval' ${analyticsScriptSrc}`
+      : `script-src 'self' 'unsafe-inline' ${analyticsScriptSrc}`;
 
     const csp = [
       "default-src 'self'",
@@ -33,7 +33,7 @@ const nextConfig = {
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: https:",
       "font-src 'self' data:",
-      `connect-src 'self' ${process.env.NEXT_PUBLIC_SUPABASE_URL || ""} https://api-adresse.data.gouv.fr https://cloud.umami.is https://gateway.umami.is ${analyticsConnectSrc}`,
+      `connect-src 'self' ${process.env.NEXT_PUBLIC_SUPABASE_URL || ""} https://api-adresse.data.gouv.fr ${analyticsConnectSrc}`,
       "frame-ancestors 'none'",
       "base-uri 'self'",
       "form-action 'self'",

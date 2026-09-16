@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Script from "next/script";
 import { Fraunces, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import CookieConsent from "./components/CookieConsent";
@@ -61,12 +60,6 @@ export default function RootLayout({
         {children}
         <CookieConsent />
         <AnalyticsScripts />
-        <Script
-          defer
-          src="https://cloud.umami.is/script.js"
-          data-website-id="84252f81-77e3-4879-9e44-26d94c4936bc"
-          strategy="afterInteractive"
-        />
       </body>
     </html>
   );

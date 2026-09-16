@@ -57,14 +57,12 @@ export default function PolitiqueConfidentialitePage() {
         <section>
           <h2 className="font-display text-lg text-white">Cookies</h2>
           <p className="mt-2">
-            Le site utilise des cookies strictement nécessaires à son
-            fonctionnement (connexion à votre espace hôte), ainsi que le
-            script Umami (mesure d&apos;audience sans cookie, sans donnée
-            personnelle). Un bandeau vous permet en plus d&apos;autoriser ou
-            non des cookies de mesure d&apos;audience et publicitaires (Meta
-            Pixel, Microsoft Clarity), désactivés par défaut. Vous pouvez
-            revenir sur votre choix à tout moment via le lien « Gérer les
-            cookies » en bas de page.
+            Le site utilise uniquement des cookies strictement nécessaires à
+            son fonctionnement (connexion à votre espace hôte). Un bandeau
+            vous permet en plus d&apos;autoriser ou non des cookies de mesure
+            d&apos;audience et publicitaires (Meta Pixel, Microsoft Clarity),
+            désactivés par défaut. Vous pouvez revenir sur votre choix à tout
+            moment via le lien « Gérer les cookies » en bas de page.
           </p>
         </section>
 
