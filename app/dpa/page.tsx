@@ -156,7 +156,8 @@ export default function DpaPage() {
             sous-traitants ultérieurs suivants :
           </p>
           <ul className="mt-2 list-disc space-y-1 pl-5">
-            <li>Meta Platforms Ireland Ltd — WhatsApp Business Platform, messagerie</li>
+            <li>Meta Platforms Ireland Ltd — WhatsApp Business Platform (messagerie) et Meta Pixel (mesure publicitaire, avec consentement)</li>
+            <li>Microsoft Ireland Operations Ltd (Clarity) — analyse d'usage du site (avec consentement)</li>
             <li>OpenRouter, Inc. (relayant vers Google Gemini) — traitement du langage naturel</li>
             <li>n8n GmbH — orchestration des automatisations</li>
             <li>Supabase, Inc. — authentification, données de compte, logements et conversations</li>

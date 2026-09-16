@@ -37,6 +37,9 @@ function saveConsent(analytics: boolean) {
   } catch {
     // stockage local indisponible (ex. navigation privée) — le bandeau réapparaîtra à la prochaine visite
   }
+  // Prévient AnalyticsScripts.tsx pour qu'il active/désactive Pixel et
+  // Clarity immédiatement, sans avoir besoin de recharger la page.
+  window.dispatchEvent(new Event("cookie-consent-updated"));
 }
 
 export default function CookieConsent() {

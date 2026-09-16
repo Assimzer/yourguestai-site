@@ -12,7 +12,14 @@ export const metadata: Metadata = {
 const subprocessors = [
   {
     name: "Meta Platforms Ireland Ltd",
-    service: "WhatsApp Business Platform — acheminement des messages",
+    service:
+      "WhatsApp Business Platform (acheminement des messages) et Meta Pixel (mesure publicitaire, avec consentement)",
+    country: "Irlande / États-Unis",
+    guarantee: "Clauses contractuelles types (CCT)",
+  },
+  {
+    name: "Microsoft Ireland Operations Ltd (Clarity)",
+    service: "Analyse d'usage du site (avec consentement)",
     country: "Irlande / États-Unis",
     guarantee: "Clauses contractuelles types (CCT)",
   },
@@ -58,7 +65,7 @@ export default function SousTraitantsPage() {
         Liste des sous-traitants
       </h1>
       <p className="mt-2 text-sm text-mist-500">
-        Dernière mise à jour : 15 septembre 2026 · Version 1.1
+        Dernière mise à jour : 16 septembre 2026 · Version 1.2
       </p>
 
       <div className="mt-8 space-y-6 text-sm leading-relaxed text-mist-300">
