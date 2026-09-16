@@ -372,6 +372,12 @@ export async function getMessagesData(
   // Fiabilite : temps de reponse moyen (entrant -> prochain sortant dans la
   // meme conversation) et part des conversations resolues sans escalade.
   // Sert au badge de fiabilite affiche sur le tableau de bord.
+  // Comparaison tolerante (casse, espaces) : memes regles que sensBadge()
+  // dans MessagesList.tsx, pour rester coherent avec ce qui est deja affiche
+  // a l'hote plutot que de dependre d'une valeur exacte "entrant"/"sortant".
+  const isEntrant = (sens: string) => (sens || "").toLowerCase().includes("entrant");
+  const isSortant = (sens: string) => (sens || "").toLowerCase().includes("sortant");
+
   const responseTimesMs: number[] = [];
   const byConversationSorted = new Map<string, typeof rawMessages>();
   for (const m of rawMessages) {
@@ -383,15 +389,15 @@ export async function getMessagesData(
   for (const list of byConversationSorted.values()) {
     const sorted = [...list].sort((a, b) => a.date.localeCompare(b.date));
     for (let i = 0; i < sorted.length - 1; i++) {
-      if (sorted[i].sens !== "entrant") continue;
+      if (!isEntrant(sorted[i].sens)) continue;
       // Cherche le prochain message sortant qui suit ce message entrant.
       for (let j = i + 1; j < sorted.length; j++) {
-        if (sorted[j].sens === "sortant") {
+        if (isSortant(sorted[j].sens)) {
           const delta = new Date(sorted[j].date).getTime() - new Date(sorted[i].date).getTime();
           if (Number.isFinite(delta) && delta > 0) responseTimesMs.push(delta);
           break;
         }
-        if (sorted[j].sens === "entrant") break;
+        if (isEntrant(sorted[j].sens)) break;
       }
     }
   }
