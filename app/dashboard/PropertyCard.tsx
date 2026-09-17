@@ -42,6 +42,7 @@ export default function PropertyCard({
   const [renameError, setRenameError] = useState<string | null>(null);
   const [showShare, setShowShare] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [guideLinkCopied, setGuideLinkCopied] = useState(false);
   const [codeLogement, setCodeLogement] = useState(property.code_logement);
   const [regenerating, setRegenerating] = useState(false);
   const [confirmingRegenerate, setConfirmingRegenerate] = useState(false);
@@ -53,6 +54,9 @@ export default function PropertyCard({
   const shareLink = codeLogement
     ? `https://wa.me/33624099289?text=${encodeURIComponent(codeLogement)}`
     : null;
+  const guideLink = codeLogement
+    ? `${process.env.NEXT_PUBLIC_URL || ""}/guide/${codeLogement}`
+    : null;
 
   async function copyShareLink() {
     if (!shareLink) return;
@@ -60,6 +64,17 @@ export default function PropertyCard({
       await navigator.clipboard.writeText(shareLink);
       setLinkCopied(true);
       setTimeout(() => setLinkCopied(false), 2000);
+    } catch {
+      // Presse-papiers indisponible : le lien reste affiche et selectionnable a la main.
+    }
+  }
+
+  async function copyGuideLink() {
+    if (!guideLink) return;
+    try {
+      await navigator.clipboard.writeText(guideLink);
+      setGuideLinkCopied(true);
+      setTimeout(() => setGuideLinkCopied(false), 2000);
     } catch {
       // Presse-papiers indisponible : le lien reste affiche et selectionnable a la main.
     }
@@ -387,6 +402,30 @@ export default function PropertyCard({
               {linkCopied ? "Copié ✓" : "Copier"}
             </button>
           </div>
+
+          {guideLink && (
+            <div className="mt-3 border-t border-night-700 pt-3">
+              <p className="text-xs text-mist-400">
+                Ou partagez directement la page du livret d&apos;accueil
+                (consultable sans WhatsApp) :
+              </p>
+              <div className="mt-2 flex gap-2">
+                <input
+                  readOnly
+                  value={guideLink}
+                  onFocus={(e) => e.target.select()}
+                  className="flex-1 rounded-lg border border-night-600 bg-night-800 px-3 py-2 font-mono text-xs text-white"
+                />
+                <button
+                  type="button"
+                  onClick={copyGuideLink}
+                  className="shrink-0 rounded-lg bg-porch-500 px-3 py-2 text-xs font-semibold text-night-950 transition hover:bg-porch-400"
+                >
+                  {guideLinkCopied ? "Copié ✓" : "Copier"}
+                </button>
+              </div>
+            </div>
+          )}
 
           {!confirmingRegenerate ? (
             <button
