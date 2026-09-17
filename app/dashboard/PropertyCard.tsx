@@ -275,16 +275,10 @@ export default function PropertyCard({
               Messages répondus : <span className="text-porch-500 font-medium">{messageCount}</span>
             </p>
           )}
-          {property.code_logement && (
-            <p className="mt-1 text-xs">
-              {guideView ? (
-                <span className="text-ok">
-                  👁 Livret consulté ({guideView.view_count}×) — dernière fois{" "}
-                  {formatViewRelative(guideView.last_viewed_at)}
-                </span>
-              ) : (
-                <span className="text-mist-500">👁 Livret pas encore consulté</span>
-              )}
+          {property.code_logement && guideView && (
+            <p className="mt-1 text-xs text-ok">
+              👁 Livret consulté ({guideView.view_count}×) — dernière fois{" "}
+              {formatViewRelative(guideView.last_viewed_at)}
             </p>
           )}
         </div>
