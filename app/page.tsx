@@ -8,6 +8,7 @@ import AnimatedGradientText from "./components/AnimatedGradientText";
 import RatingCard from "./components/RatingCard";
 import HubSpokeDiagram from "./components/HubSpokeDiagram";
 import FloatingWhatsAppButton from "./components/FloatingWhatsAppButton";
+import LeoChatWidget from "./components/LeoChatWidget";
 
 const problems = [
   {
@@ -288,6 +289,7 @@ export default function Home() {
 
       <SiteFooter />
       <FloatingWhatsAppButton />
+      <LeoChatWidget />
     </main>
   );
 }

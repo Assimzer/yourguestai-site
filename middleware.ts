@@ -42,7 +42,9 @@ export async function middleware(request: NextRequest) {
   // qu'une future route oublie ce check. Exclut les deux routes publiques
   // par design (webhook Stripe verifie par signature, formulaire de demo).
   const isPublicApiRoute =
-    pathname === "/api/stripe/webhook" || pathname === "/api/demo-request";
+    pathname === "/api/stripe/webhook" ||
+    pathname === "/api/demo-request" ||
+    pathname === "/api/leo-chat";
 
   if (!user && pathname.startsWith("/api/") && !isPublicApiRoute) {
     return NextResponse.json({ error: "Non authentifié" }, { status: 401 });
