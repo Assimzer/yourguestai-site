@@ -16,7 +16,16 @@ const problems = [
   },
   {
     title: "Le score de réactivité en pâtit",
-    text: "Une réponse tardive coûte des points sur Airbnb et Booking, et parfois le statut Superhost.",
+    text: (
+      <>
+        Une réponse tardive coûte des points sur Airbnb et Booking, et
+        parfois le{" "}
+        <strong className="font-semibold text-porch-400">
+          statut Superhost
+        </strong>
+        .
+      </>
+    ),
   },
   {
     title: "Un numéro, dix logements",
@@ -65,9 +74,12 @@ export default function Home() {
               <AnimatedGradientText>ne s&apos;endort jamais</AnimatedGradientText>.
             </h1>
             <p className="mt-6 max-w-lg text-lg leading-relaxed text-mist-400">
-              LÉO répond à vos voyageurs sur WhatsApp en moins de 30 secondes,
-              24h/24 — sur chacun de vos logements, avec les bonnes
-              informations.
+              LÉO répond à vos voyageurs sur WhatsApp en{" "}
+              <strong className="font-semibold text-porch-400">
+                moins de 30 secondes
+              </strong>
+              , <strong className="font-semibold text-porch-400">24h/24</strong>{" "}
+              — sur chacun de vos logements, avec les bonnes informations.
             </p>
             <div className="mt-9 flex flex-wrap items-center gap-4">
               <a
@@ -135,9 +147,15 @@ export default function Home() {
             : <em>« Le chauffage ne s&apos;allume pas, il fait 8°C dans le
             salon, je fais quoi ? »</em> — un modèle de message ne sait pas
             répondre à ça. LÉO, lui, comprend la question, va chercher la
-            consigne exacte de votre logement, et répond en quelques
-            secondes. Si le problème dépasse ce qu&apos;il peut résoudre, il
-            vous escalade l&apos;alerte immédiatement.
+            consigne exacte de votre logement, et{" "}
+            <strong className="font-semibold text-porch-400">
+              répond en quelques secondes
+            </strong>
+            . Si le problème dépasse ce qu&apos;il peut résoudre, il vous{" "}
+            <strong className="font-semibold text-porch-400">
+              escalade l&apos;alerte immédiatement
+            </strong>
+            .
           </p>
         </div>
       </section>
@@ -179,8 +197,11 @@ export default function Home() {
           </h2>
           <p className="mx-auto mt-4 max-w-lg text-sm leading-relaxed text-mist-400">
             LÉO reçoit chaque message sur le même numéro WhatsApp et sait
-            exactement à quel voyageur et quel logement il répond — jamais
-            d&apos;informations mélangées.
+            exactement à quel voyageur et quel logement il répond —{" "}
+            <strong className="font-semibold text-porch-400">
+              jamais d&apos;informations mélangées
+            </strong>
+            .
           </p>
 
           <div className="mt-14">
@@ -203,9 +224,14 @@ export default function Home() {
             Plus vous gérez de logements, moins vous payez.
           </h2>
           <p className="mx-auto mt-3 max-w-md text-center text-sm text-mist-400">
-            Un seul plan, toutes les fonctionnalités incluses. Sans
-            engagement. Aucun frais de mise en service. Essai gratuit 14
-            jours.
+            Un seul plan, toutes les fonctionnalités incluses.{" "}
+            <strong className="font-semibold text-porch-400">
+              Sans engagement.
+            </strong>{" "}
+            Aucun frais de mise en service.{" "}
+            <strong className="font-semibold text-porch-400">
+              Essai gratuit 14 jours.
+            </strong>
           </p>
 
           <div className="mt-10">
