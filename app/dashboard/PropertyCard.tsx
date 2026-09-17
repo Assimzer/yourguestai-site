@@ -13,9 +13,22 @@ type Property = {
   demande_avis: boolean;
 };
 
+type GuideView = { view_count: number; last_viewed_at: string };
+
+function formatViewRelative(iso: string) {
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const diffHours = diffMs / 3_600_000;
+  if (diffHours < 1) return "à l'instant";
+  if (diffHours < 24) return `il y a ${Math.floor(diffHours)}h`;
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays === 1) return "hier";
+  return `il y a ${diffDays}j`;
+}
+
 export default function PropertyCard({
   property,
   messageCount = null,
+  guideView = null,
 }: {
   property: Property;
   // Passe par le parent (un seul fetch groupe via /api/messages) plutot que
@@ -23,6 +36,7 @@ export default function PropertyCard({
   // /api/message-stats (un par carte -> limite de debit Airtable atteinte
   // des 5-6 logements charges en meme temps).
   messageCount?: number | null;
+  guideView?: GuideView | null;
 }) {
   const router = useRouter();
   const [actif, setActif] = useState(property.actif);
@@ -259,6 +273,18 @@ export default function PropertyCard({
           {messageCount !== null && (
             <p className="text-xs text-mist-400 mt-1">
               Messages répondus : <span className="text-porch-500 font-medium">{messageCount}</span>
+            </p>
+          )}
+          {property.code_logement && (
+            <p className="mt-1 text-xs">
+              {guideView ? (
+                <span className="text-ok">
+                  👁 Livret consulté ({guideView.view_count}×) — dernière fois{" "}
+                  {formatViewRelative(guideView.last_viewed_at)}
+                </span>
+              ) : (
+                <span className="text-mist-500">👁 Livret pas encore consulté</span>
+              )}
             </p>
           )}
         </div>

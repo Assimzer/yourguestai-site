@@ -12,11 +12,14 @@ type Property = {
   demande_avis: boolean;
 };
 
+type GuideView = { view_count: number; last_viewed_at: string };
+
 export default function LogementsGrid({ properties }: { properties: Property[] }) {
   // Un seul fetch groupe pour tous les logements, plutot qu'un appel
   // /api/message-stats par carte (qui multipliait les requetes Airtable et
   // finissait par declencher un 429 RATE_LIMIT_REACHED cote n8n).
   const [countsByLogement, setCountsByLogement] = useState<Record<string, number>>({});
+  const [viewsByProperty, setViewsByProperty] = useState<Record<string, GuideView>>({});
 
   useEffect(() => {
     fetch("/api/messages", { cache: "no-store" })
@@ -32,6 +35,24 @@ export default function LogementsGrid({ properties }: { properties: Property[] }
       .catch(() => {
         // Pas bloquant : les cartes s'affichent simplement sans compteur.
       });
+
+    fetch("/api/guide-views", { cache: "no-store" })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.error || !Array.isArray(data.views)) return;
+        const map: Record<string, GuideView> = {};
+        for (const v of data.views as {
+          property_id: string;
+          view_count: number;
+          last_viewed_at: string;
+        }[]) {
+          map[v.property_id] = { view_count: v.view_count, last_viewed_at: v.last_viewed_at };
+        }
+        setViewsByProperty(map);
+      })
+      .catch(() => {
+        // Pas bloquant : les cartes s'affichent simplement sans indicateur.
+      });
   }, []);
 
   return (
@@ -41,6 +62,7 @@ export default function LogementsGrid({ properties }: { properties: Property[] }
           key={p.id}
           property={p}
           messageCount={countsByLogement[p.nom] ?? null}
+          guideView={viewsByProperty[p.id] ?? null}
         />
       ))}
     </div>
