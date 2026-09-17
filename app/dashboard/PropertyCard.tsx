@@ -423,6 +423,14 @@ export default function PropertyCard({
                 >
                   {guideLinkCopied ? "Copié ✓" : "Copier"}
                 </button>
+                <a
+                  href={`/guide/${codeLogement}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="shrink-0 rounded-lg border border-night-600 px-3 py-2 text-xs font-semibold text-mist-200 transition hover:bg-night-800"
+                >
+                  Voir
+                </a>
               </div>
             </div>
           )}
