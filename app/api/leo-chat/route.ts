@@ -24,7 +24,10 @@ export async function POST(request: Request) {
     if (!res.ok) throw new Error("webhook failed");
 
     const data = await res.json();
-    return NextResponse.json({ reply: data.reply ?? "" });
+    // Le noeud "Respond to Webhook" (First Incoming Item) renvoie tel quel
+    // l'objet produit par le noeud AI Agent, dont le champ de sortie
+    // s'appelle "output" (meme convention que "Agent gemini" cote WhatsApp).
+    return NextResponse.json({ reply: data.output ?? "" });
   } catch {
     return NextResponse.json(
       { error: "Échec de la réponse, réessayez." },
