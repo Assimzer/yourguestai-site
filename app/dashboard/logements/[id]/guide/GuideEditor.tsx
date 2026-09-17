@@ -7,6 +7,8 @@ type GuideFields = {
   adresse: string;
   ville: string;
   photo_url: string;
+  brand_logo_url: string;
+  brand_color: string;
   checkin_heure: string;
   checkout_heure: string;
   instructions_arrivee: string;
@@ -26,6 +28,8 @@ const EMPTY: GuideFields = {
   adresse: "",
   ville: "",
   photo_url: "",
+  brand_logo_url: "",
+  brand_color: "",
   checkin_heure: "",
   checkout_heure: "",
   instructions_arrivee: "",
@@ -63,6 +67,8 @@ export default function GuideEditor({
 
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [photoError, setPhotoError] = useState("");
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [logoError, setLogoError] = useState("");
   const [showPhotoUrlInput, setShowPhotoUrlInput] = useState(false);
 
   const [addressSuggestions, setAddressSuggestions] = useState<AddressSuggestion[]>([]);
@@ -83,6 +89,8 @@ export default function GuideEditor({
           adresse: f.adresse ?? "",
           ville: f.ville ?? "",
           photo_url: f.photo_url ?? "",
+          brand_logo_url: f.brand_logo_url ?? "",
+          brand_color: f.brand_color ?? "",
           checkin_heure: f.checkin_heure ?? "",
           checkout_heure: f.checkout_heure ?? "",
           instructions_arrivee: f.instructions_arrivee ?? "",
@@ -199,6 +207,48 @@ export default function GuideEditor({
       setSaved(false);
     } finally {
       setUploadingPhoto(false);
+    }
+  }
+
+  async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setLogoError("Merci de choisir un fichier image (jpeg, png...).");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setLogoError("Image trop lourde (2 Mo max).");
+      return;
+    }
+
+    setUploadingLogo(true);
+    setLogoError("");
+
+    try {
+      const supabase = createClient();
+      const extension = file.name.split(".").pop() || "png";
+      const path = `${userId}/${propertyId}/logo.${extension}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("logement-photos")
+        .upload(path, file, { upsert: true, cacheControl: "3600" });
+
+      if (uploadError) {
+        setLogoError("Échec de l'envoi. Réessaie.");
+        return;
+      }
+
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("logement-photos").getPublicUrl(path);
+
+      setFields((prev) => ({ ...prev, brand_logo_url: `${publicUrl}?t=${Date.now()}` }));
+      setSaved(false);
+    } finally {
+      setUploadingLogo(false);
     }
   }
 
@@ -346,6 +396,65 @@ export default function GuideEditor({
             </button>
           )}
         </div>
+      </Section>
+
+      {/* Section : Personnalisation du livret public */}
+      <Section title="🎨 Personnalisation du livret">
+        <div>
+          <label className="mb-1.5 block text-xs font-medium text-mist-400">
+            Logo
+          </label>
+          <p className="mb-2 text-xs text-mist-500">
+            Affiché en haut de la page du livret consultée par le voyageur.
+          </p>
+          <div className="flex items-center gap-3">
+            {fields.brand_logo_url && (
+              <img
+                src={fields.brand_logo_url}
+                alt="Aperçu du logo"
+                className="h-14 w-14 rounded-lg border border-night-600 object-contain bg-night-950 p-1"
+              />
+            )}
+            <label className="cursor-pointer rounded-lg border border-night-600 bg-night-800 px-3 py-2 text-xs font-medium text-mist-300 transition hover:border-porch-500/40 hover:text-white">
+              {uploadingLogo
+                ? "Envoi..."
+                : fields.brand_logo_url
+                ? "Changer le logo"
+                : "Choisir un fichier"}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleLogoUpload}
+                disabled={uploadingLogo}
+                className="hidden"
+              />
+            </label>
+          </div>
+          {logoError && <p className="mt-2 text-xs text-warn">{logoError}</p>}
+        </div>
+
+        <Field
+          label="Couleur d'accent"
+          hint="Utilisée pour le bouton WhatsApp et les titres de section sur la page du livret."
+        >
+          <div className="flex items-center gap-3">
+            <input
+              type="color"
+              value={fields.brand_color || "#E8A33D"}
+              onChange={set("brand_color")}
+              className="h-10 w-14 cursor-pointer rounded-lg border border-night-600 bg-night-800 p-1"
+            />
+            {fields.brand_color && (
+              <button
+                type="button"
+                onClick={() => setFields((prev) => ({ ...prev, brand_color: "" }))}
+                className="text-xs text-mist-500 underline decoration-night-600 underline-offset-4 hover:text-mist-300"
+              >
+                Revenir à la couleur par défaut
+              </button>
+            )}
+          </div>
+        </Field>
       </Section>
 
       {/* Section : Arrivée / Départ */}

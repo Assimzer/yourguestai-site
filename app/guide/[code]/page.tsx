@@ -13,7 +13,7 @@ const supabase = createClient(
 );
 
 const PUBLIC_COLUMNS =
-  "id, nom, ville, adresse, photo_url, checkin_heure, checkout_heure, instructions_arrivee, code_acces, wifi_nom, wifi_code, parking_info, parking_photo_url, equipements, equipements_photo_url, regles_maison, recommandations, contact_urgence, numero_proprietaire, nom_conciergerie, code_logement";
+  "id, nom, ville, adresse, photo_url, brand_logo_url, brand_color, checkin_heure, checkout_heure, instructions_arrivee, code_acces, wifi_nom, wifi_code, parking_info, parking_photo_url, equipements, equipements_photo_url, regles_maison, recommandations, contact_urgence, numero_proprietaire, nom_conciergerie, code_logement";
 
 type PublicGuide = {
   id: string;
@@ -21,6 +21,8 @@ type PublicGuide = {
   ville: string | null;
   adresse: string | null;
   photo_url: string | null;
+  brand_logo_url: string | null;
+  brand_color: string | null;
   checkin_heure: string | null;
   checkout_heure: string | null;
   instructions_arrivee: string | null;
@@ -78,10 +80,19 @@ export default async function PublicGuidePage({
   const whatsappLink = `https://wa.me/33624099289?text=${encodeURIComponent(
     guide.code_logement ?? ""
   )}`;
+  const accentColor = guide.brand_color || "#E8A33D";
 
   return (
     <main className="mx-auto min-h-screen max-w-lg pb-16">
       <div className="relative h-56 w-full overflow-hidden bg-night-800">
+        {guide.brand_logo_url && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={guide.brand_logo_url}
+            alt=""
+            className="absolute left-4 top-4 z-10 h-12 w-12 rounded-lg bg-night-950/80 object-contain p-1"
+          />
+        )}
         {guide.photo_url ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
@@ -210,7 +221,8 @@ export default async function PublicGuidePage({
           href={whatsappLink}
           target="_blank"
           rel="noreferrer"
-          className="mt-4 flex items-center justify-center gap-2 rounded-xl bg-porch-500 px-5 py-3.5 text-center text-sm font-semibold text-night-950 transition hover:bg-porch-400"
+          style={{ backgroundColor: accentColor }}
+          className="mt-4 flex items-center justify-center gap-2 rounded-xl px-5 py-3.5 text-center text-sm font-semibold text-night-950 transition hover:brightness-110"
         >
           💬 Une question ? Écrire à LÉO sur WhatsApp
         </a>
