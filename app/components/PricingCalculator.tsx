@@ -126,7 +126,21 @@ export default function PricingCalculator() {
           })}
         </div>
 
-        <div className="mt-8 border-t border-night-700 pt-6 text-center">
+        <ul className="mt-6 grid grid-cols-1 gap-x-6 gap-y-2 border-t border-night-700 pt-6 text-sm text-mist-300 sm:grid-cols-2">
+          {[
+            "IA multilingue",
+            "Réponse en moins de 30 secondes",
+            "Statistiques analytiques sur les messages",
+            "Livret d'accueil numérique",
+          ].map((item) => (
+            <li key={item} className="flex items-start gap-2">
+              <span className="mt-0.5 text-porch-400">✓</span>
+              {item}
+            </li>
+          ))}
+        </ul>
+
+        <div className="mt-6 border-t border-night-700 pt-6 text-center">
           <p className="flex items-baseline justify-center gap-2">
             <span className="font-display text-5xl text-white">
               {formatPrice(unitPrice)} €
