@@ -35,10 +35,6 @@ export async function POST(req: Request) {
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
-        console.log(
-          "checkout.session.completed customer_details:",
-          JSON.stringify(session.customer_details)
-        );
 
         // Récupère le statut réel de l'abonnement (peut être 'trialing' si essai gratuit)
         const subscription = await stripe.subscriptions.retrieve(
