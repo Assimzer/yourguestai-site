@@ -1,6 +1,7 @@
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
 import { notifyN8nToggle } from "@/lib/n8n/notifyToggle";
+import { sendMetaEvent } from "@/lib/metaCapi";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 const supabase = createClient(
@@ -49,6 +50,17 @@ export async function POST(req: Request) {
             statut_abonnement: mapStripeStatus(subscription.status),
           })
           .eq("id", session.client_reference_id);
+
+        // Doublon serveur du pixel StartTrial (voir CheckoutSuccessPixel.tsx),
+        // dedupliqué grâce au même event_id basé sur l'id de session Stripe.
+        if (session.customer_details?.email) {
+          await sendMetaEvent(
+            "StartTrial",
+            `trial_${session.id}`,
+            session.customer_details.email,
+            0
+          );
+        }
         break;
       }
 
@@ -56,6 +68,21 @@ export async function POST(req: Request) {
       case "customer.subscription.deleted": {
         const sub = event.data.object as Stripe.Subscription;
         const newStatus = mapStripeStatus(sub.status);
+
+        // Passage essai -> abonnement payant : evenement Subscribe (une
+        // seule fois, au moment exact de la transition trialing -> active).
+        const previousAttributes = (
+          event.data as { previous_attributes?: { status?: string } }
+        ).previous_attributes;
+        if (previousAttributes?.status === "trialing" && sub.status === "active") {
+          const customer = await stripe.customers.retrieve(sub.customer as string);
+          const email = !customer.deleted ? customer.email : null;
+          if (email) {
+            const item = sub.items.data[0];
+            const montant = ((item?.price.unit_amount ?? 0) * (item?.quantity ?? 1)) / 100;
+            await sendMetaEvent("Subscribe", `sub_${sub.id}`, email, montant);
+          }
+        }
 
         const { data: updatedHosts } = await supabase
           .from("hosts")
