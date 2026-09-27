@@ -1,8 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
 import SubscribeButton from "./SubscribeButton";
 import ManageSubscriptionButton from "./ManageSubscriptionButton";
+import CheckoutSuccessPixel from "./CheckoutSuccessPixel";
 
-export default async function ComptePage() {
+export default async function ComptePage({
+  searchParams,
+}: {
+  searchParams: { checkout?: string; session_id?: string };
+}) {
   const supabase = createClient();
 
   const {
@@ -22,6 +27,9 @@ export default async function ComptePage() {
 
   return (
     <div>
+      {searchParams.checkout === "success" && searchParams.session_id && (
+        <CheckoutSuccessPixel sessionId={searchParams.session_id} />
+      )}
       <h1 className="font-display text-2xl text-white">Mon compte</h1>
       <p className="mt-1 text-sm text-mist-400">
         Informations liées à votre compte hôte.
