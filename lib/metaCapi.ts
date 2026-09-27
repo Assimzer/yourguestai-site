@@ -15,10 +15,13 @@ export async function sendMetaEvent(
 ) {
   const pixelId = process.env.META_PIXEL_ID;
   const token = process.env.META_CAPI_TOKEN;
-  if (!pixelId || !token) return; // pas configure -- pas bloquant
+  if (!pixelId || !token) {
+    console.error("sendMetaEvent: META_PIXEL_ID ou META_CAPI_TOKEN manquant");
+    return;
+  }
 
   try {
-    await fetch(
+    const res = await fetch(
       `https://graph.facebook.com/v21.0/${pixelId}/events?access_token=${token}`,
       {
         method: "POST",
@@ -37,8 +40,17 @@ export async function sendMetaEvent(
         }),
       }
     );
-  } catch {
+
+    const body = await res.text();
+    if (!res.ok) {
+      console.error(`sendMetaEvent: échec ${eventName} (${res.status}):`, body);
+    } else {
+      console.log(`sendMetaEvent: ${eventName} envoyé avec succès:`, body);
+    }
+  } catch (err) {
     // Best-effort : un echec d'envoi Meta ne doit jamais faire echouer le
-    // webhook Stripe (l'abonnement doit rester traite correctement).
+    // webhook Stripe (l'abonnement doit rester traite correctement), mais
+    // on le logue pour pouvoir diagnostiquer.
+    console.error(`sendMetaEvent: exception ${eventName}:`, err);
   }
 }
